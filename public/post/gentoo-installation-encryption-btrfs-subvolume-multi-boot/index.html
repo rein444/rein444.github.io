@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  
+  <meta name="author" content="rein">
+
+  
+  
+  <meta name="description" content="I have been using Arch as my daily drive for a while and decided to venture a little bit by trying out Gentoo. My first Gentoo installation went semi-successfully, so I want to record my installation process here in case I encounter the same problem in the future. Therefore, this post serves a purpose more of a personal record than a guide. With that being said, you are welcome to follow it.">
+  
+
+  
+  <link rel="icon" href="https://blog.midnight-rain.xyz/favicon.ico">
+
+  
+  
+  <meta name="keywords" content=" hugo  latex  theme ">
+  
+
+  
+  
+
+  
+  <meta property="og:title" content="Gentoo Installation (Encryption &#43; Btrfs Subvolume &#43; Multi Boot)" />
+<meta property="og:description" content="I have been using Arch as my daily drive for a while and decided to venture a little bit by trying out Gentoo. My first Gentoo installation went semi-successfully, so I want to record my installation process here in case I encounter the same problem in the future. Therefore, this post serves a purpose more of a personal record than a guide. With that being said, you are welcome to follow it." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blog.midnight-rain.xyz/post/gentoo-installation-encryption-btrfs-subvolume-multi-boot/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-06-19T20:59:14+00:00" />
+<meta property="article:modified_time" content="2021-06-19T20:59:14+00:00" />
+
+
+
+  
+  <link rel="canonical" href="https://blog.midnight-rain.xyz/post/gentoo-installation-encryption-btrfs-subvolume-multi-boot/">
+
+  
+  
+  <meta itemprop="name" content="Gentoo Installation (Encryption &#43; Btrfs Subvolume &#43; Multi Boot)">
+<meta itemprop="description" content="I have been using Arch as my daily drive for a while and decided to venture a little bit by trying out Gentoo. My first Gentoo installation went semi-successfully, so I want to record my installation process here in case I encounter the same problem in the future. Therefore, this post serves a purpose more of a personal record than a guide. With that being said, you are welcome to follow it."><meta itemprop="datePublished" content="2021-06-19T20:59:14+00:00" />
+<meta itemprop="dateModified" content="2021-06-19T20:59:14+00:00" />
+<meta itemprop="wordCount" content="2584">
+<meta itemprop="keywords" content="tech," />
+
+  
+  <link media="screen" rel="stylesheet" href='https://blog.midnight-rain.xyz/css/common.css'>
+  <link media="screen" rel="stylesheet" href='https://blog.midnight-rain.xyz/css/content.css'>
+
+  
+  
+  <title>Gentoo Installation (Encryption &#43; Btrfs Subvolume &#43; Multi Boot) - Midnight Rain Blog</title>
+  
+
+  
+  <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Gentoo Installation (Encryption &#43; Btrfs Subvolume &#43; Multi Boot)"/>
+<meta name="twitter:description" content="I have been using Arch as my daily drive for a while and decided to venture a little bit by trying out Gentoo. My first Gentoo installation went semi-successfully, so I want to record my installation process here in case I encounter the same problem in the future. Therefore, this post serves a purpose more of a personal record than a guide. With that being said, you are welcome to follow it."/>
+
+
+  
+<link rel="stylesheet" href='https://blog.midnight-rain.xyz/css/single.css'>
+
+</head>
+
+<body>
+  <div id="wrapper">
+    <header id="header">
+  <h1>
+    <a href="https://blog.midnight-rain.xyz">Midnight Rain Blog</a>
+  </h1>
+
+  <nav>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/">Post</a>
+    </span>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/post/">Archives</a>
+    </span>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/about/">About</a>
+    </span>
+    
+  </nav>
+</header>
+
+    
+<main id="main" class="post">
+  
+  
+  <h1>Gentoo Installation (Encryption &#43; Btrfs Subvolume &#43; Multi Boot)</h1>
+  
+  <div>
+    <b>Keywords: </b>
+    
+    <a class="link" href='https://blog.midnight-rain.xyz/tags/tech'>#tech</a>
+    
+  </div>
+  
+  
+  <article class="content">
+    
+    <p>I have been using Arch as my daily drive for a while and decided to venture a little bit by trying out Gentoo. My first Gentoo installation went semi-successfully, so I want to record my installation process here in case I encounter the same problem in the future. Therefore, this post serves a purpose more of a personal record than a guide. With that being said, you are welcome to follow it.</p>
+<hr>
+<h2 id="before-installation">Before Installation</h2>
+<p>There are three drives on my computer. One ssd (dev/sda) for Windows and Arch, one hdd (dev/sdb) for shared storage, and a nvme ssd (dev/nvme0n1) with two partitions linked to Windows. I am going to install a <strong>luks encrypted Gentoo with btrfs subvolumes as root</strong> to my nvme drive.</p>
+<p>Since I already have a linux running, there is no need for me to use any additional installation medium. But if you only have Windows, download the <a href="https://ubuntu.com/download/desktop">Ubuntu iso</a> or any other distro that can access a GUI based browser without installing the system and create a bootable usb stick using <a href="https://rufus.ie/en_US/">Rufus</a>.</p>
+<hr>
+<h2 id="preparing-the-disk">Preparing the Disk</h2>
+<p>Change the user to root for your own convenience. This step is optional.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo -i
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Open your favorite disk management tool on your Linux and be ready to partition your disk. For me it&rsquo;s fdisk.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">fdisk /dev/nvme0n1 <span class="c1">#change it to your disk</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>If you don&rsquo;t know how to use fdisk, follow <a href="https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Disks#Partitioning_the_disk_with_GPT_for_UEFI">this page</a>. Please notice that I am using <strong>GPT/UEFI</strong> here. After finishing adding partition, you should have a layout similar to the one below. Check your partition layout by using the command <code>fdisk -l /dev/nvme0n1</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">Device            Start       End   Sectors  Size Type
+</span></span><span class="line"><span class="cl">/dev/nvme0n1p1       <span class="m">34</span>     <span class="m">32767</span>     <span class="m">32734</span>   16M Microsoft reserved
+</span></span><span class="line"><span class="cl">/dev/nvme0n1p2    <span class="m">32768</span>  <span class="m">40992767</span>  <span class="m">40960000</span> 19.5G Microsoft basic data
+</span></span><span class="line"><span class="cl">/dev/nvme0n1p3 <span class="m">40992768</span>  <span class="m">41402367</span>    <span class="m">409600</span>  200M EFI System
+</span></span><span class="line"><span class="cl">/dev/nvme0n1p4 <span class="m">41402368</span>  <span class="m">42426367</span>   <span class="m">1024000</span>  500M Linux filesystem
+</span></span><span class="line"><span class="cl">/dev/nvme0n1p5 <span class="m">42426368</span> <span class="m">566714367</span> <span class="m">524288000</span>  250G Linux filesystem
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>/dev/nvme0n1p3</code> is the EFI partition required by UEFI boot; <code>/dev/nvme0n1p4</code> is the boot partition required by an encrypted root; and <code>/dev/nvme0n1p5</code> is where we are going to put the root and home.
+You are now ready to encrypt your system. Run the following command.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cryptsetup luksFormat /dev/nvme0n1p5 <span class="c1">#change it to your desired partition</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Type the password and open it.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cryptsetup luksOpen /dev/nvme0n1p5 cryptgentoo <span class="c1">#or name it anything you want</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Format your system accordingly.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mkfs.vfat -F <span class="m">32</span> /dev/nvme0n1p3 <span class="c1">#change it to your EFI partition</span>
+</span></span><span class="line"><span class="cl">mkfs.ext4 /dev/nvme0n1p4 <span class="c1">#change it to your boot partition</span>
+</span></span><span class="line"><span class="cl">mkfs.btrfs /dev/mapper/cryptgentoo <span class="c1">#change cryptgentoo to the name you gave earlier</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Create subvolumes for root and home. You might have to manually create the folder and mount the top volume first. After you have created the subvolume, you can safely unmount.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">mkdir -p /mnt/gentoo
+</span></span><span class="line"><span class="cl">mount /dev/mapper/cryptgentoo /mnt/gentoo
+</span></span><span class="line"><span class="cl">btrfs subvolume create /mnt/gentoo/gentoo
+</span></span><span class="line"><span class="cl">btrfs subvolume create /mnt/gentoo/gentoo/home
+</span></span><span class="line"><span class="cl">mkdir /mnt/gentoo/home
+</span></span><span class="line"><span class="cl">umount /dev/mapper/cryptgentoo
+</span></span><span class="line"><span class="cl">mount -o subvol=gentoo /dev/mapper/cryptgentoo /mnt/gentoo
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="installing-gentoo-installation-files">Installing Gentoo Installation Files</h2>
+<p>If you are inside the live environment of Ubuntu, the clock should have been already set to UTC time. If not, double check if you have the correct time and adjust it manually if needed.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">date MMDDhhmmYYYY
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Now you have to make a decision on which stage tarball to choose. I recommend multilib with openrc for most people due to its flexibility. Simply go to <a href="https://www.gentoo.org/downloads/">this page</a> and click download, or use your favorite tool like <code>wget</code> or <code>lynx</code>.</p>
+<p>The handbook suggests you to verify and validate the stage file. You should do it but I am going to skip this step. Just directly go to the directory and unpack the tarball.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">cd</span> /mnt/gentoo
+</span></span><span class="line"><span class="cl">tar xpvf /path/to/stage3-*.tar.xz --xattrs-include<span class="o">=</span><span class="s1">&#39;*.*&#39;</span> --numeric-owner
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>In order to optimize gentoo, you need to edit the make.conf. We are not going to make tons of changes here right now since you can always edit it later and activate the changes by <code>emerge --ask --changed-use --deep @world</code>. Open <code>/mnt/gentoo/etc/portage/make.conf</code> with a text editor and make the following changes.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">COMMON_FLAGS</span><span class="o">=</span><span class="s2">&#34;-march=native -O2 -pipe&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nv">MAKEOPTS</span><span class="o">=</span><span class="s2">&#34;-j&lt;number&gt;&#34;</span> <span class="c1">#number of cores plus one</span>
+</span></span><span class="line"><span class="cl"><span class="nv">GENTOO_MIRRORS</span><span class="o">=</span><span class="s2">&#34;http://www.gtlib.gatech.edu/pub/gentoo rsync://rsync.gtlib.gatech.edu/gentoo&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="nv">VIDEO_CARDS</span><span class="o">=</span><span class="s2">&#34;&lt;your_card&gt;&#34;</span> <span class="c1">#intel, nvidia, radeon, vesa</span>
+</span></span><span class="line"><span class="cl"><span class="nv">ACCEPT_KEYWORDS</span><span class="o">=</span><span class="s2">&#34;~amd64&#34;</span> <span class="c1">#ignore this for faster compiling time</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Change the mirrors if you are not living in the US. To use <code>mirrorselect</code>, you have to chroot to the new environment unless you are using the minimal gentoo installation CD which I adviced against earlier. Find a location that&rsquo;s close to you <a href="https://www.gentoo.org/downloads/mirrors/">here</a>.</p>
+<p>We still have a few important things to do before entering the new environment. For a detailed explanation, please resort to the handbook. I am only going to copy the commands.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mkdir --parents /mnt/gentoo/etc/portage/repos.conf
+</span></span><span class="line"><span class="cl">cp /mnt/gentoo/usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
+</span></span><span class="line"><span class="cl">cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
+</span></span><span class="line"><span class="cl">mount --types proc /proc /mnt/gentoo/proc
+</span></span><span class="line"><span class="cl">mount --rbind /sys /mnt/gentoo/sys
+</span></span><span class="line"><span class="cl">mount --make-rslave /mnt/gentoo/sys
+</span></span><span class="line"><span class="cl">mount --rbind /dev /mnt/gentoo/dev
+</span></span><span class="line"><span class="cl">mount --make-rslave /mnt/gentoo/dev
+</span></span><span class="line"><span class="cl"><span class="nb">test</span> -L /dev/shm <span class="o">&amp;&amp;</span> rm /dev/shm <span class="o">&amp;&amp;</span> mkdir /dev/shm
+</span></span><span class="line"><span class="cl">mount --types tmpfs --options nosuid,nodev,noexec shm /dev/shm
+</span></span><span class="line"><span class="cl">chmod <span class="m">1777</span> /dev/shm
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Be sure that none of the commands above returns anything. You will encounter more errors in the Gentoo environment if it does.</p>
+<p>Now you can enter the new environment. The last command will add a <code>(chroot)</code> label to your hostname. Remember to always stay inside the chroot environment while doing the following steps in this post by checking the label.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">chroot /mnt/gentoo /bin/bash
+</span></span><span class="line"><span class="cl"><span class="nb">source</span> /etc/profile
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">PS1</span><span class="o">=</span><span class="s2">&#34;(chroot) </span><span class="si">${</span><span class="nv">PS1</span><span class="si">}</span><span class="s2">&#34;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Mount the boot and the efi partition. <strong>Do not do it before chrooting</strong>.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mount /dev/nvme0n1p4 /boot <span class="c1">#change it to your boot partition</span>
+</span></span><span class="line"><span class="cl">mount /dev/nvme0n1p3 /boot/efi <span class="c1">#change it to your efi partition</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Install a snapshot of the Gentoo ebuild repository and update it.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">emerge-websync
+</span></span><span class="line"><span class="cl">emerge --sync
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>It&rsquo;s time to choose a profile. First check all the available profiles through <code>eselect profile list</code>, then select the profile by <code>eselect profile set &lt;number&gt;</code>. For now you can just select the default stable one for a faster compilation time. Otherwise select the <code>desktop</code> version.</p>
+<p>Update the @world set.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">emerge -auvDN @world
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Here comes the most Gentoo part of this Gentoo installation post, editing the USE flags. It is not required for you to do all the editing right now, so no worries if you don&rsquo;t know what you want to enable or disable. If you are using anything other than gnome or kde for desktop environment, I would encourage you to disable them. A full list of USE flags can be found <a href="https://www.gentoo.org/support/use-flags/">here</a>.</p>
+<p>I am skipping the license part for now. Next you need to set the timezone and locales.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ls /usr/share/zoneinfo
+</span></span><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s2">&#34;your/timezone&#34;</span> &gt; /etc/timezone
+</span></span><span class="line"><span class="cl">emerge --config sys-libs/timezone-data
+</span></span><span class="line"><span class="cl"><span class="nb">echo</span> en_US.UTF-8 UTF-8 &gt; /etc/locale.gen <span class="c1">#add more if you like</span>
+</span></span><span class="line"><span class="cl">locale-gen
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Set the system-wide locale settings by first checking the available targets using <code>eselect locale list</code>, then choose the locale by <code>eselect locale set &lt;number&gt;</code>. Reload the environment after you finish.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">env-update <span class="o">&amp;&amp;</span> <span class="nb">source</span> /etc/profile <span class="o">&amp;&amp;</span> <span class="nb">export</span> <span class="nv">PS1</span><span class="o">=</span><span class="s2">&#34;(chroot) </span><span class="si">${</span><span class="nv">PS1</span><span class="si">}</span><span class="s2">&#34;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="configuring-the-kernel">Configuring the Kernel</h2>
+<p>For the full Gentoo experience, you are welcome to configure the kernel manually. But keep in mind that it is a time-consuming process to find all your hardwares and the corresponding option. So for a compromised solution, I&rsquo;m going to use genkernel with the <code>--menuconfig</code> option. This allows me to enjoy the benefits of an automatically configured kernel while not having to enable every possible option. Lovely.</p>
+<p>Emerge all the required packages. The second line emerges packages that might be useful later.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">emerge --ask sys-kernel/gentoo-sources genkernel
+</span></span><span class="line"><span class="cl">emerge --ask cryptsetup lvm2 btrfs-progs ntfs3g
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>If the output asks you to review the changed config files, do so by running <code>dispatch-conf</code> then retyping the commands above. To create a symbolic link, run the commands below.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">eselect kernel list
+</span></span><span class="line"><span class="cl">eselect kernel <span class="nb">set</span> <span class="m">1</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>By then you should have a symbolic link called <code>linux</code> pointing to the kernel source. Check by listing it then changing your directory to it..</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ls -l /usr/src/linux
+</span></span><span class="line"><span class="cl"><span class="nb">cd</span> /usr/src/linux
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Before generating the kernel, there are two things to do. First add your boot partition to <code>/etc/fstab</code>. I recommend using the UUID and it should be like this. You can find the UUID by running the command <code>blkid</code>.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1">#/dev/nvme0n1p4</span>
+</span></span><span class="line"><span class="cl"><span class="nv">UUID</span><span class="o">=</span>&lt;UUID&gt;	/boot	ext4	defaults,noatime	<span class="m">0</span> <span class="m">2</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Next, be sure that <strong>you have the corresponding package for the kernel compression mode you are going to use</strong>. Let&rsquo;s take lz4 as an example. Check it by running emerge with the pretend option.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">emerge -p lz4
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>If it is marked with an <code>N</code>, you need to install it. You don&rsquo;t need to do anything if it is marked with a <code>R</code>, which means replacing.</p>
+<p>Now run genkernel with all the options below.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">genkernel --lvm --luks --btrfs --menuconfig --save-config all
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>I know we are not using lvm here, but you might have to add it and also enable it in your kernel in order to unlock your luks device when you boot. The last option will save your configuration and use that file the next time you run genkernel.</p>
+<p>When the menu shows up, do the following changes. <strong>Remember that M and * are different</strong>.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1">#btrfs support</span>
+</span></span><span class="line"><span class="cl">File systems  ---&gt;
+</span></span><span class="line"><span class="cl">    &lt;*&gt; Btrfs filesystem
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">#luks support</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Enable loadable module support
+</span></span><span class="line"><span class="cl">Device Drivers ---&gt;
+</span></span><span class="line"><span class="cl">    <span class="o">[</span>*<span class="o">]</span> Multiple devices driver support <span class="o">(</span>RAID and LVM<span class="o">)</span> ---&gt;
+</span></span><span class="line"><span class="cl">        &lt;*&gt; Device mapper support
+</span></span><span class="line"><span class="cl">        &lt;*&gt;   Crypt target support
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Cryptographic API ---&gt;
+</span></span><span class="line"><span class="cl">    &lt;*&gt; XTS support
+</span></span><span class="line"><span class="cl">    &lt;*&gt; SHA224 and SHA256 digest algorithm
+</span></span><span class="line"><span class="cl">    &lt;*&gt; AES cipher algorithms
+</span></span><span class="line"><span class="cl">    &lt;*&gt; AES cipher algorithms <span class="o">(</span>x86_64<span class="o">)</span>
+</span></span><span class="line"><span class="cl">    &lt;*&gt; User-space interface <span class="k">for</span> <span class="nb">hash</span> algorithms
+</span></span><span class="line"><span class="cl">    &lt;*&gt; User-space interface <span class="k">for</span> symmetric key cipher algorithms
+</span></span><span class="line"><span class="cl">General setup  ---&gt;
+</span></span><span class="line"><span class="cl">    <span class="o">[</span>*<span class="o">]</span> Initial RAM filesystem and RAM disk <span class="o">(</span>initramfs/initrd<span class="o">)</span> support
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">#lvm support</span>
+</span></span><span class="line"><span class="cl">Device Drivers  ---&gt;
+</span></span><span class="line"><span class="cl">   Multiple devices driver support <span class="o">(</span>RAID and LVM<span class="o">)</span>  ---&gt;
+</span></span><span class="line"><span class="cl">       &lt;*&gt; Device mapper support
+</span></span><span class="line"><span class="cl">           &lt;*&gt; Crypt target support
+</span></span><span class="line"><span class="cl">           &lt;*&gt; Snapshot target
+</span></span><span class="line"><span class="cl">           &lt;*&gt; Mirror target
+</span></span><span class="line"><span class="cl">           &lt;*&gt; Multipath target
+</span></span><span class="line"><span class="cl">               &lt;*&gt; I/O Path Selector based on the number of in-flight I/Os
+</span></span><span class="line"><span class="cl">               &lt;*&gt; I/O Path Selector based on the service <span class="nb">time</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">#ntfs support</span>
+</span></span><span class="line"><span class="cl">File systems  ---&gt;
+</span></span><span class="line"><span class="cl">    DOS/FAT/NT Filesystems  ---&gt;
+</span></span><span class="line"><span class="cl">        &lt;*&gt; NTFS file system support
+</span></span><span class="line"><span class="cl">        &lt;*&gt;   NTFS write support
+</span></span><span class="line"><span class="cl">		&lt;*&gt; FUSE <span class="o">(</span>Filesystem in Userspace<span class="o">)</span> support
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">#nvme support</span>
+</span></span><span class="line"><span class="cl">Device Drivers →
+</span></span><span class="line"><span class="cl">  NVME Support →
+</span></span><span class="line"><span class="cl">    &lt;*&gt; NVM Express block device
+</span></span><span class="line"><span class="cl">    <span class="o">[</span>*<span class="o">]</span> NVMe multipath support
+</span></span><span class="line"><span class="cl">    <span class="o">[</span>*<span class="o">]</span> NVMe hardware monitoring
+</span></span><span class="line"><span class="cl">    &lt;M&gt; NVM Express over Fabrics FC host driver
+</span></span><span class="line"><span class="cl">    &lt;M&gt; NVM Express over Fabrics TCP host driver
+</span></span><span class="line"><span class="cl">    &lt;M&gt; NVMe Target support
+</span></span><span class="line"><span class="cl">          <span class="o">[</span>*<span class="o">]</span>   NVMe Target Passthrough support
+</span></span><span class="line"><span class="cl">        &lt;M&gt;   NVMe loopback device support
+</span></span><span class="line"><span class="cl">        &lt;M&gt;   NVMe over Fabrics FC target driver
+</span></span><span class="line"><span class="cl">        &lt; &gt;     NVMe over Fabrics FC Transport Loopback Test driver <span class="o">(</span>NEW<span class="o">)</span>
+</span></span><span class="line"><span class="cl">        &lt;M&gt;   NVMe over Fabrics TCP target support
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>For optimization, check out <a href="https://youtu.be/NVWVHiLx1sU">Mental Outlaw&rsquo;s video</a>. After finished editing, save and exit. Genkernel will do the rest for you.</p>
+<p>The handbook masked it optional but I recommend you to install the firmware now.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">emerge --ask sys-kernel/linux-firmware
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="configure-the-system">Configure the System</h2>
+<p>Add a password to the root account by simply typing <code>passwd</code>. To add a new user, do the following</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">useradd -m -G users,wheel,audio,video,tty -s /bin/bash &lt;user&gt;
+</span></span><span class="line"><span class="cl">passwd &lt;user&gt;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>For sudo usage, install the sudo package and uncomment the required line in the configuration file. I&rsquo;m not elaborating here.</p>
+<p>In order for your system to automatically mount the necessary partitions, everything has to be specified in <code>/etc/fstab</code>. I will give mine as an example.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1">#/dev/nvme0n1p4</span>
+</span></span><span class="line"><span class="cl"><span class="nv">UUID</span><span class="o">=</span>&lt;UUID&gt;	/boot	ext4	defaults,noatime	<span class="m">0</span> <span class="m">2</span>
+</span></span><span class="line"><span class="cl"><span class="c1">#/dev/mapper/cryptgentoo</span>
+</span></span><span class="line"><span class="cl"><span class="nv">UUID</span><span class="o">=</span>&lt;UUID&gt;	/	btrfs	<span class="nv">subvol</span><span class="o">=</span>gentoo,subvolid<span class="o">=</span>&lt;subvolid&gt;,relatime,rw   <span class="m">0</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl"><span class="c1">#/dev/mapper/cryptgentoo</span>
+</span></span><span class="line"><span class="cl"><span class="nv">UUID</span><span class="o">=</span>&lt;UUID&gt;	/home	btrfs	<span class="nv">subvol</span><span class="o">=</span>/gentoo/home,subvolid<span class="o">=</span>&lt;subvolid&gt;,relatime,rw <span class="m">0</span> <span class="m">2</span>
+</span></span><span class="line"><span class="cl"><span class="c1">#/dev/sdb3</span>
+</span></span><span class="line"><span class="cl"><span class="nv">UUID</span><span class="o">=</span>&lt;UUID&gt;	/data_shared	ntfs-3g	<span class="nv">gid</span><span class="o">=</span>&lt;gid&gt;,uid<span class="o">=</span>&lt;uid&gt;,dmask<span class="o">=</span>022,fmask<span class="o">=</span>133,big_writes,windows_names	<span class="m">0</span> <span class="m">0</span>
+</span></span><span class="line"><span class="cl"><span class="c1">#/dev/nvme0n1p3</span>
+</span></span><span class="line"><span class="cl"><span class="nv">UUID</span><span class="o">=</span>&lt;UUID&gt;	/boot/efi	vfat	defaults	0	<span class="m">0</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>It&rsquo;s hella messy, but you get the point. <code>/data_shared</code> is for my shared ntfs drive. Find the id by typing <code>id &lt;user&gt;</code>. <code>subvolid</code> is not required, but you can find it through <code>btrfs subvolume list /mnt</code>.</p>
+<p>Change the hostname in <code>/etc/conf.d/hostname</code> and edit the <code>/etc/hosts</code> file as followed.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># IPv4 and IPv6 localhost aliases</span>
+</span></span><span class="line"><span class="cl">127.0.0.1	&lt;hostname&gt;.localdomain localhost
+</span></span><span class="line"><span class="cl">::1		localhost	&lt;hostname&gt;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>If you are using ethernet, follow <a href="https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/System#Automatically_start_networking_at_boot">this part</a> of the handbook. If you are using wifi, you have some additional steps to do. I installed wpa_supplicant and networkmanager just in case. The guides for them are clear enough. <strong>Both ethernet and wifi users need the net-misc/dhcpcd package in most cases</strong>.</p>
+<p>Install a system logger and a cron daemon if you like.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">emerge -a syslog-ng cronie
+</span></span><span class="line"><span class="cl">rc-update add syslog-ng default
+</span></span><span class="line"><span class="cl">rc-update add cronie default
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<h2 id="configuring-the-bootloader">Configuring the Bootloader</h2>
+<p>Echo the following to the corresponding file and add dmcrypt to openRC before emerging grub.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s1">&#39;GRUB_PLATFORMS=&#34;efi-64&#34;&#39;</span> &gt;&gt; /etc/portage/make.conf
+</span></span><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s2">&#34;sys-boot/grub:2 device-mapper&#34;</span> &gt;&gt; /etc/portage/package.use/sys-boot
+</span></span><span class="line"><span class="cl">rc-update add dmcrypt boot
+</span></span><span class="line"><span class="cl">emerge -a sys-boot/grub:2
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Edit the grub configuration file so your luks with btrfs subvolume setup works. Open <code>/etc/default/grub</code> and add this line. The first UUID is your raw partition (e.g. /dev/nvme0n1p5), and the second UUID is your opened luks device (e.g. /dev/mapper/cryptgentoo).</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nv">GRUB_CMDLINE_LINUX</span><span class="o">=</span><span class="s2">&#34;crypt_root=UUID=&lt;UUID_of_your_luks_partition&gt; real_root=UUID=&lt;UUID_of_your_decrypted_luks_device&gt; rootflags=subvol=gentoo rootfstype=btrfs dolvm dobtrfs quiet&#34;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Also you might want to uncomment <code>GRUB_TIMEOUT=</code> and add a number (in seconds). This way it gives you more time to choose a system before the screen flashes to the first boot entry.</p>
+<p>Install grub. Make sure that your EFI partition is mounted. <strong>Do not forget the <code>--removable</code> option</strong>, otherwise it might not appear on your boot menu.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">grub-install --target<span class="o">=</span>x86_64-efi --efi-directory<span class="o">=</span>/boot/efi --removable /dev/nvme0n1 <span class="c1">#change it to your disk</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Generate the configuration. Ignore the os-prober warning unless you need it to detect Windows that&rsquo;s on the same disk.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">grub-mkconfig -o /boot/grub/grub.cfg
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Time to reboot! Yeahhhhhhh</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">exit</span>
+</span></span><span class="line"><span class="cl"><span class="nb">cd</span>
+</span></span><span class="line"><span class="cl">umount -l /mnt/gentoo/dev<span class="o">{</span>/shm,/pts,<span class="o">}</span>
+</span></span><span class="line"><span class="cl">umount -R /mnt/gentoo
+</span></span><span class="line"><span class="cl">reboot
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Don&rsquo;t forget to remove your usb device if you are using one.</p>
+<hr>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p><strong>Problem</strong>: <em>Block device is not a valid root device</em>
+<strong>Solution</strong>: Double check that you have all the options related to luks and lvm enabled in your kernel, the <code>--lvm</code> option is passed when generating an initramfs, dmcrypt is added to rc-service, and your <code>/etc/default/grub</code> file is like what I have above. If mine doesn&rsquo;t work, try some alternating options like <code>root=UUID=&lt;UUID&gt;</code>, <code>rd.luks.uuid=&lt;UUID&gt;</code>, etc. Keep trying until you get a different error.</p>
+<p><strong>Problem</strong>: <em>Failed to open LUKS device /dev/xxx</em>
+<strong>Solution</strong>: Try everything above. If nothing works, try removing the cryptsetup package from the @world using the command below but do not depclean. Really weird and dumb but it worked in my case. Re-emerge it later after you manage to enter the system.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">emerge --deselect cryptsetup @world
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>Problem</strong>: <em>Invalid EFI path</em>
+<strong>Solution</strong>: This should not happen at all. Are you sure you are on the UEFI mode? If you get this for booting Windows, did you manually add the BIOS mode chainloader entry instead of using os-prober? Or if you are trying to chainload your Gentoo machine to the grub on the other disk or vise versa but it doesn&rsquo;t work? For the last scenario, let me present to you a simpler method. Just copy the entry on the <code>grub.cfg</code> (should be right after <code>### BEGIN /etc/grub.d/10_linux ###</code>) and paste it in <code>/etc/grub.d/40_custom</code> for the other grub. Regenerate grub afterwards.</p>
+<hr>
+<p>I have been using Gentoo for a week or so after I finished writing this. My thoughts? Fuck /g/entoo I&rsquo;m back to sweet home arch. It is indeed a good distro if you are all for minimalism and customization, but sorry I am not really interested in turning my room into an airport when compiling firefox.</p>
+
+    
+  </article>
+  <div class="paginator">
+    
+    <a class="link" href="https://blog.midnight-rain.xyz/post/an-alternative-interpretation-of-kon-satoshis-perfect-blue-part-2/">← prev</a>
+    
+    
+    <a class="link" href="https://blog.midnight-rain.xyz/post/lets-talk-about-sympathy/">next →</a>
+    
+  </div>
+  <div class="comment">
+    
+    
+    
+    
+    
+    
+  </div>
+  
+</main>
+
+    <footer id="footer">
+  <div>
+    <span>© 2019</span> - <span>2023</span>
+  </div>
+
+  <div>
+    <span>Powered by </span>
+    <a class="link" href="https://gohugo.io/">Hugo</a>
+    <span> Theme </span>
+    <a class="link" href="https://github.com/queensferryme/hugo-theme-texify">TeXify</a>
+  </div>
+ <div>
+	 <a class="link" href="https://blog.midnight-rain.xyz/index.xml">RSS</a>
+</footer>
+
+  </div>
+
+  
+  
+
+  
+  
+
+  
+  
+
+</body>
+
+</html>

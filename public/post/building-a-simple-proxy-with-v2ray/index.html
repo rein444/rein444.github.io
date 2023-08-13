@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  
+  <meta name="author" content="rein">
+
+  
+  
+  <meta name="description" content="V2ray is &ldquo;a platform for building proxies to bypass network restrictions&rdquo;. You can find the github page here, the official English website here, and also here. As you might have noticed, v2ray is not a tool invented primarily for privacy (but it is very tweakable for all kinds of purposes), bur is rather used to bypass the GFW in China. Most of you will never use it probably, but it is always fun to try new things, am I right?">
+  
+
+  
+  <link rel="icon" href="https://blog.midnight-rain.xyz/favicon.ico">
+
+  
+  
+  <meta name="keywords" content=" hugo  latex  theme ">
+  
+
+  
+  
+
+  
+  <meta property="og:title" content="Building a simple proxy with V2ray" />
+<meta property="og:description" content="V2ray is &ldquo;a platform for building proxies to bypass network restrictions&rdquo;. You can find the github page here, the official English website here, and also here. As you might have noticed, v2ray is not a tool invented primarily for privacy (but it is very tweakable for all kinds of purposes), bur is rather used to bypass the GFW in China. Most of you will never use it probably, but it is always fun to try new things, am I right?" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blog.midnight-rain.xyz/post/building-a-simple-proxy-with-v2ray/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-04-13T07:37:15+00:00" />
+<meta property="article:modified_time" content="2021-04-13T07:37:15+00:00" />
+
+
+
+  
+  <link rel="canonical" href="https://blog.midnight-rain.xyz/post/building-a-simple-proxy-with-v2ray/">
+
+  
+  
+  <meta itemprop="name" content="Building a simple proxy with V2ray">
+<meta itemprop="description" content="V2ray is &ldquo;a platform for building proxies to bypass network restrictions&rdquo;. You can find the github page here, the official English website here, and also here. As you might have noticed, v2ray is not a tool invented primarily for privacy (but it is very tweakable for all kinds of purposes), bur is rather used to bypass the GFW in China. Most of you will never use it probably, but it is always fun to try new things, am I right?"><meta itemprop="datePublished" content="2021-04-13T07:37:15+00:00" />
+<meta itemprop="dateModified" content="2021-04-13T07:37:15+00:00" />
+<meta itemprop="wordCount" content="986">
+<meta itemprop="keywords" content="tech," />
+
+  
+  <link media="screen" rel="stylesheet" href='https://blog.midnight-rain.xyz/css/common.css'>
+  <link media="screen" rel="stylesheet" href='https://blog.midnight-rain.xyz/css/content.css'>
+
+  
+  
+  <title>Building a simple proxy with V2ray - Midnight Rain Blog</title>
+  
+
+  
+  <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Building a simple proxy with V2ray"/>
+<meta name="twitter:description" content="V2ray is &ldquo;a platform for building proxies to bypass network restrictions&rdquo;. You can find the github page here, the official English website here, and also here. As you might have noticed, v2ray is not a tool invented primarily for privacy (but it is very tweakable for all kinds of purposes), bur is rather used to bypass the GFW in China. Most of you will never use it probably, but it is always fun to try new things, am I right?"/>
+
+
+  
+<link rel="stylesheet" href='https://blog.midnight-rain.xyz/css/single.css'>
+
+</head>
+
+<body>
+  <div id="wrapper">
+    <header id="header">
+  <h1>
+    <a href="https://blog.midnight-rain.xyz">Midnight Rain Blog</a>
+  </h1>
+
+  <nav>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/">Post</a>
+    </span>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/post/">Archives</a>
+    </span>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/about/">About</a>
+    </span>
+    
+  </nav>
+</header>
+
+    
+<main id="main" class="post">
+  
+  
+  <h1>Building a simple proxy with V2ray</h1>
+  
+  <div>
+    <b>Keywords: </b>
+    
+    <a class="link" href='https://blog.midnight-rain.xyz/tags/tech'>#tech</a>
+    
+  </div>
+  
+  
+  <article class="content">
+    
+    <p>V2ray is &ldquo;a platform for building proxies to bypass network restrictions&rdquo;. You can find the github page <a href="https://github.com/v2fly/v2ray-core">here</a>, the official English website <a href="https://www.v2ray.com/en/index.html">here</a>, and also <a href="https://www.v2fly.org/en_US/">here</a>. As you might have noticed, v2ray is not a tool invented primarily for privacy (but it is very tweakable for all kinds of purposes), bur is rather used to bypass the GFW in China. Most of you will never use it probably, but it is always fun to try new things, am I right? And remember what I have said, its customization gives you a variety of options to play around with, like obfuscation, transparent proxy, or even ad blocking.</p>
+<p>In a nutshell, v2ray uses a inbound-and-outbound structure to control the flow of packets. If v2ray is used on a client, then the inbound will receive data from the browser and the outbound will send data to the server; if v2ray is used on a server, then the inbound will receive data from the client and the outbound will send data to where the client has requested. You can have multiple outbounds and inbounds. The way inbound and outbound handles data is determined by different protocols (Socks, VMess, VLess, Freedom, etc.), and each protocol may have its own transport (TCP, mKcp, WebSocket, etc.).</p>
+<p>VMess is an original and the most widely used protocol, developed by V2ray specifically for passing the deep packet inspection imposed by the GFW. VLess is an updated version of it that does not require time synchronization but does not have the traffic encrypted. Here we are going to setup a basic proxy using VMess.</p>
+<hr>
+<h2 id="server">Server</h2>
+<p>Log into your server and set the time if it&rsquo;s not what you have on the client.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">date -s <span class="s1">&#39;year-month-day hour:minute:second&#39;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>It would be the easiest to install V2ray via their script.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">wget https://install.direct/go.sh
+</span></span><span class="line"><span class="cl">bash go.sh
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>After the installation is finished, we can proceed to edit the config file. It is included as part of the installation script, named <code>config.json</code>. It should be edited like this:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">&#34;log&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;access&#34;</span><span class="p">:</span> <span class="s2">&#34;/var/log/v2ray/access.log&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;error&#34;</span><span class="p">:</span> <span class="s2">&#34;/var/log/v2ray/error.log&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;loglevel&#34;</span><span class="p">:</span> <span class="s2">&#34;info&#34;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">},</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">&#34;inbounds&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;port&#34;</span><span class="p">:</span> <span class="p">[</span><span class="err">port</span> <span class="err">number</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;protocol&#34;</span><span class="p">:</span> <span class="s2">&#34;vmess&#34;</span><span class="p">,</span>   
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;settings&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;clients&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">          <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="s2">&#34;[your uuid]&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;alterId&#34;</span><span class="p">:</span> <span class="p">[</span><span class="err">your</span> <span class="err">alterid</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">          <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="p">]</span>
+</span></span><span class="line"><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">],</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">&#34;outbounds&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;protocol&#34;</span><span class="p">:</span> <span class="s2">&#34;freedom&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;settings&#34;</span><span class="p">:</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>inbounds vmess port</code>: the listening port on the server
+<code>id</code>: the main id of the user. you can generate one <a href="https://www.uuidgenerator.net/">here</a>
+<code>alterid</code>: used to pass the inspection. can be anywhere between 0 to the largest number your server can support
+<code>freedom</code>: passes all TCP or UDP connection to their destinations</p>
+<p>Now start the service.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">systemctl start v2ray.service
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>If you have a firewall enabled, make sure to open the listening port. I am using ufw here.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ufw allow <span class="o">[</span>port number<span class="o">]</span>/tcp
+</span></span><span class="line"><span class="cl">ufw allow <span class="o">[</span>port number<span class="o">]</span>/udp
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="linux-client">Linux Client</h2>
+<p>Find your system&rsquo;s architecture <a href="https://github.com/v2fly/v2ray-core/releases/tag/v4.37.3">here</a>. Download and extract it. Now find the <code>config.json</code> file and write it like this.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">&#34;log&#34;</span><span class="p">:{</span>
+</span></span><span class="line"><span class="cl">   <span class="nt">&#34;loglevel&#34;</span><span class="p">:</span> <span class="s2">&#34;info&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">   <span class="nt">&#34;access&#34;</span><span class="p">:</span> <span class="s2">&#34;/var/log/v2ray/access.log&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">   <span class="nt">&#34;error&#34;</span><span class="p">:</span> <span class="s2">&#34;/var/log/v2ray/error.log&#34;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">},</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">&#34;inbounds&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;port&#34;</span><span class="p">:</span> <span class="p">[</span><span class="err">port</span> <span class="err">number</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;protocol&#34;</span><span class="p">:</span> <span class="s2">&#34;socks&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;sniffing&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;enabled&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;destOverride&#34;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&#34;http&#34;</span><span class="p">,</span> <span class="s2">&#34;tls&#34;</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">      <span class="p">},</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;settings&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;auth&#34;</span><span class="p">:</span> <span class="s2">&#34;noauth&#34;</span>  
+</span></span><span class="line"><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;port&#34;</span><span class="p">:</span> <span class="p">[</span><span class="err">port</span> <span class="err">number</span><span class="p">],</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;protocol&#34;</span><span class="p">:</span> <span class="s2">&#34;http&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;sniffing&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">          <span class="nt">&#34;enabled&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">          <span class="nt">&#34;destOverride&#34;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&#34;http&#34;</span><span class="p">,</span> <span class="s2">&#34;tls&#34;</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">     <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">],</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">&#34;outbounds&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;protocol&#34;</span><span class="p">:</span> <span class="s2">&#34;vmess&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;settings&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">&#34;vnext&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">          <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;address&#34;</span><span class="p">:</span> <span class="s2">&#34;[server&#39;s ip address]&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;port&#34;</span><span class="p">:</span> <span class="p">[</span><span class="err">port</span> <span class="err">number</span><span class="p">],</span>  
+</span></span><span class="line"><span class="cl">            <span class="nt">&#34;users&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">              <span class="p">{</span>
+</span></span><span class="line"><span class="cl">                <span class="nt">&#34;id&#34;</span><span class="p">:</span> <span class="s2">&#34;[your uuid]&#34;</span><span class="p">,</span>  <span class="c1">//need to be the same as the server config
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>                <span class="nt">&#34;alterId&#34;</span><span class="p">:</span> <span class="p">[</span><span class="err">your</span> <span class="err">alterid</span><span class="p">],</span> <span class="c1">//need to be the same as the server config
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>                <span class="nt">&#34;security&#34;</span><span class="p">:</span> <span class="s2">&#34;auto&#34;</span>
+</span></span><span class="line"><span class="cl">              <span class="p">}</span>
+</span></span><span class="line"><span class="cl">            <span class="p">]</span>
+</span></span><span class="line"><span class="cl">          <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="p">]</span>
+</span></span><span class="line"><span class="cl">      <span class="p">},</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">&#34;mux&#34;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&#34;enabled&#34;</span><span class="p">:</span> <span class="kc">true</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>inbounds socks port</code>: the listening port on your client for Socks protocol
+<code>sniffing</code>: content sniffing, can be used for solving DNS spoofing and setting rules for domains
+<code>noauth</code>: anonymous authentication
+<code>inbounds http port</code>: the listening port on your client for HTTP protocol
+<code>outbounds vmess port</code>: the listening port on your server
+<code>security</code>: can be <code>aes-128-gcm</code> for PC use, <code>chacha20-poly1305</code> for phone use, or <code>auto</code> for automatic detection
+<code>mux</code>: designed to reduce TCP handshake latency by using one physical TCP connections for multiple virtual TCP connections. might not be needed</p>
+<p>To allow v2ray to autostart, you could add a systemd entry to the <code>/etc/systemd/system</code> folder. Make sure the config file and the executable file are in the same folder.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>Unit<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="nv">Description</span><span class="o">=</span>v2ray
+</span></span><span class="line"><span class="cl"><span class="nv">After</span><span class="o">=</span>network.target
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>Service<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="nv">ExecStart</span><span class="o">=</span>/path/to/v2ray
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>Install<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="nv">WantedBy</span><span class="o">=</span>multi-user.target
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Start it and enable it.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">systemctl start v2ray.service
+</span></span><span class="line"><span class="cl">systemctl <span class="nb">enable</span> v2ray.service
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>If it can&rsquo;t be started, you might need to create the log files manually.</p>
+<h2 id="windows-client">Windows Client</h2>
+<p>Find your system&rsquo;s architecture <a href="https://github.com/v2fly/v2ray-core/releases/tag/v4.37.3">here</a>. Download and extract it. The config file should be the same as what I wrote above for linux and the only change you need to make is to delete the <code>log</code> sector because windows doesn&rsquo;t support it.</p>
+<p>To autostart, create a .vbs file. Same thing here, make sure the config file and the exe file are in the same folder.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">Dim WinScriptHost
+</span></span><span class="line"><span class="cl">Set WinScriptHost = CreateObject(&#34;WScript.Shell&#34;)
+</span></span><span class="line"><span class="cl">WinScriptHost.Run Chr(34) &amp; &#34;path\to\v2ray.exe&#34; &amp; Chr(34), 0
+</span></span><span class="line"><span class="cl">Set WinScriptHost = Nothing
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Create a shortcut of it and add it to the <code>shell:startup</code> folder.</p>
+<hr>
+<p>I also tried the WebSocket+TLS+Web+CDN combo, but somehow it didn&rsquo;t work. It might be some problem related to Cloudflare that I am too <del>dumb</del> lazy to figure out. The server is working fine, but the access log at the client is dumping on me tons of ambiguous errors. But if I do find the solution, I might update this later.</p>
+
+    
+  </article>
+  <div class="paginator">
+    
+    <a class="link" href="https://blog.midnight-rain.xyz/post/an-overview-of-ipfs-usage-explanation-and-history/">← prev</a>
+    
+    
+    <a class="link" href="https://blog.midnight-rain.xyz/post/an-alternative-interpretation-of-kon-satoshis-perfect-blue-part-1/">next →</a>
+    
+  </div>
+  <div class="comment">
+    
+    
+    
+    
+    
+    
+  </div>
+  
+</main>
+
+    <footer id="footer">
+  <div>
+    <span>© 2019</span> - <span>2023</span>
+  </div>
+
+  <div>
+    <span>Powered by </span>
+    <a class="link" href="https://gohugo.io/">Hugo</a>
+    <span> Theme </span>
+    <a class="link" href="https://github.com/queensferryme/hugo-theme-texify">TeXify</a>
+  </div>
+ <div>
+	 <a class="link" href="https://blog.midnight-rain.xyz/index.xml">RSS</a>
+</footer>
+
+  </div>
+
+  
+  
+
+  
+  
+
+  
+  
+
+</body>
+
+</html>

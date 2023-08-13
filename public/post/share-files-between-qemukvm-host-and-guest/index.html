@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  
+  <meta name="author" content="rein">
+
+  
+  
+  <meta name="description" content="There is a variety of options to choose from for file sharing between the host and a QEMU/KVM virtual machine. This post is a collection of them.
+SFTP If your goal is just to occasionally share a file with no need for it to be synchronized, SFTP would do the trick. Find your IP address through ifconfig or ip addr and make sure your ssh port is open. Make a connection and use get to download files or put to upload files like what you usually do.">
+  
+
+  
+  <link rel="icon" href="https://blog.midnight-rain.xyz/favicon.ico">
+
+  
+  
+  <meta name="keywords" content=" hugo  latex  theme ">
+  
+
+  
+  
+
+  
+  <meta property="og:title" content="Share Files Between QEMU/KVM Host and Guest (SFTP &#43; 9p-virtio &#43; virtiofs &#43; Samba &#43; NFS)" />
+<meta property="og:description" content="There is a variety of options to choose from for file sharing between the host and a QEMU/KVM virtual machine. This post is a collection of them.
+SFTP If your goal is just to occasionally share a file with no need for it to be synchronized, SFTP would do the trick. Find your IP address through ifconfig or ip addr and make sure your ssh port is open. Make a connection and use get to download files or put to upload files like what you usually do." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blog.midnight-rain.xyz/post/share-files-between-qemukvm-host-and-guest/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-05-06T11:29:14+00:00" />
+<meta property="article:modified_time" content="2022-05-06T11:29:14+00:00" />
+
+
+
+  
+  <link rel="canonical" href="https://blog.midnight-rain.xyz/post/share-files-between-qemukvm-host-and-guest/">
+
+  
+  
+  <meta itemprop="name" content="Share Files Between QEMU/KVM Host and Guest (SFTP &#43; 9p-virtio &#43; virtiofs &#43; Samba &#43; NFS)">
+<meta itemprop="description" content="There is a variety of options to choose from for file sharing between the host and a QEMU/KVM virtual machine. This post is a collection of them.
+SFTP If your goal is just to occasionally share a file with no need for it to be synchronized, SFTP would do the trick. Find your IP address through ifconfig or ip addr and make sure your ssh port is open. Make a connection and use get to download files or put to upload files like what you usually do."><meta itemprop="datePublished" content="2022-05-06T11:29:14+00:00" />
+<meta itemprop="dateModified" content="2022-05-06T11:29:14+00:00" />
+<meta itemprop="wordCount" content="1117">
+<meta itemprop="keywords" content="tech," />
+
+  
+  <link media="screen" rel="stylesheet" href='https://blog.midnight-rain.xyz/css/common.css'>
+  <link media="screen" rel="stylesheet" href='https://blog.midnight-rain.xyz/css/content.css'>
+
+  
+  
+  <title>Share Files Between QEMU/KVM Host and Guest (SFTP &#43; 9p-virtio &#43; virtiofs &#43; Samba &#43; NFS) - Midnight Rain Blog</title>
+  
+
+  
+  <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Share Files Between QEMU/KVM Host and Guest (SFTP &#43; 9p-virtio &#43; virtiofs &#43; Samba &#43; NFS)"/>
+<meta name="twitter:description" content="There is a variety of options to choose from for file sharing between the host and a QEMU/KVM virtual machine. This post is a collection of them.
+SFTP If your goal is just to occasionally share a file with no need for it to be synchronized, SFTP would do the trick. Find your IP address through ifconfig or ip addr and make sure your ssh port is open. Make a connection and use get to download files or put to upload files like what you usually do."/>
+
+
+  
+<link rel="stylesheet" href='https://blog.midnight-rain.xyz/css/single.css'>
+
+</head>
+
+<body>
+  <div id="wrapper">
+    <header id="header">
+  <h1>
+    <a href="https://blog.midnight-rain.xyz">Midnight Rain Blog</a>
+  </h1>
+
+  <nav>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/">Post</a>
+    </span>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/post/">Archives</a>
+    </span>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/about/">About</a>
+    </span>
+    
+  </nav>
+</header>
+
+    
+<main id="main" class="post">
+  
+  
+  <h1>Share Files Between QEMU/KVM Host and Guest (SFTP &#43; 9p-virtio &#43; virtiofs &#43; Samba &#43; NFS)</h1>
+  
+  <div>
+    <b>Keywords: </b>
+    
+    <a class="link" href='https://blog.midnight-rain.xyz/tags/tech'>#tech</a>
+    
+  </div>
+  
+  
+  <article class="content">
+    
+    <p>There is a variety of options to choose from for file sharing between the host and a QEMU/KVM virtual machine. This post is a collection of them.</p>
+<hr>
+<h2 id="sftp">SFTP</h2>
+<p>If your goal is just to occasionally share a file with no need for it to be synchronized, SFTP would do the trick. Find your IP address through <code>ifconfig</code> or <code>ip addr</code> and make sure your ssh port is open. Make a connection and use <code>get</code> to download files or <code>put</code> to upload files like what you usually do.</p>
+<h2 id="9p-virtio">9p-virtio</h2>
+<p>This is the easiest and most error-free option you can have but surprisingly, not much information can be found on the internet since 9p is almost obsolete. 9p, also known as Plan 9, is a network protocol for communicating between elements on a distributed system that can be used with its native virtio transport driver to access shared directories on the host machine.</p>
+<p>It&rsquo;s pretty simple to setup. First create a folder you want to share, and then open virt-maneger (or any GUI you prefer since I don&rsquo;t like working with long commands in the terminal); locate the settings of the machine you want to share files with. Click Add Hardware -&gt; Filesystem; choose virtio-9p for Driver, the folder you just created for Source path, and [a tag for your folder] (ex. &ldquo;/share&rdquo;) for Target path. Now run the machine.</p>
+<p>In the terminal, run the following command:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mount -t 9p -o <span class="nv">trans</span><span class="o">=</span>virtio /tag /mount/path
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>To auto-mount the folder, write the following into your <code>/etc/fstab</code>:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">/share	/mount/path	9p	<span class="nv">trans</span><span class="o">=</span>virtio,rw,_netdev	0	<span class="m">0</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>_netdev</code> will delay the mount until 9p modules can be loaded since it is a network based filesystem.</p>
+<p>One thing I like about this method is that it can be used in a CD live environment because 9p-vitio is part of the QEMU/KVM. One thing I don&rsquo;t mind but others might dislike is that it can&rsquo;t be used with Windows for the same reason.</p>
+<h2 id="virtiofs">virtiofs</h2>
+<p>I stumbled upon <a href="https://virtio-fs.gitlab.io/">this web page</a> when I was looking for information on 9p-virtio. Virtiofs is a shared file system that optimizes virtualization by using DAX through shared memory and FUSE instead of 9p, therefore theoretically it would be faster.</p>
+<p>In virt-manager, enable shared memory in the Memories tab, and then choose virtiofs for Driver in the Filesystem tab. Run the machine and type the following to mount it:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mount -t virtiofs /tag /mount/path
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Using virtiofs with a Windows guest machine is apparently possible too but I wouldn&rsquo;t deal with all that fuss. Read this <a href="https://virtio-fs.gitlab.io/howto-windows.html">guide</a> as a reference if you are curious.</p>
+<h2 id="samba">Samba</h2>
+<p>I am not a big fan of Samba since sometimes it picks days on whether it wants to work or not. But still, it&rsquo;s a good way to share files, especially with Windows or if you have large files. Samba is an implementation of the SMB protocol for network sharing.</p>
+<p>Install the samba suite from your distro&rsquo;s repository. Create a user by running the command <code>smbpasswd -a samba_user</code> and type a password for your samba user. Create a folder you want to share. Now go to the configuration file that&rsquo;s usually located at <code>/etc/samba/smb.conf</code> and enter the following:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">[global]
+</span></span><span class="line"><span class="cl">workgroup = WORKGROUP
+</span></span><span class="line"><span class="cl">server string = Samba Server
+</span></span><span class="line"><span class="cl">server role = standalone server
+</span></span><span class="line"><span class="cl">hosts allow = 192.168.122. 127. //subnet and localhost
+</span></span><span class="line"><span class="cl">hosts deny = ALL
+</span></span><span class="line"><span class="cl">security = user
+</span></span><span class="line"><span class="cl">passdb backend = tdbsam
+</span></span><span class="line"><span class="cl">guest account = user //the user you just created
+</span></span><span class="line"><span class="cl">dns proxy = no
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">[share] //sharename
+</span></span><span class="line"><span class="cl">comment = share file
+</span></span><span class="line"><span class="cl">path = /path/to/shared_folder
+</span></span><span class="line"><span class="cl">guest ok = no
+</span></span><span class="line"><span class="cl">valid users = user //the user you just created
+</span></span><span class="line"><span class="cl">writable = yes
+</span></span><span class="line"><span class="cl">browsable = yes
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>You might need to open up some ports if you are using a firewall. For ufw, enter the following:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ufw allow CIFS
+</span></span><span class="line"><span class="cl">ufw allow Samba
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>For iptables, enter the following:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">iptables -A INPUT -p udp --dport <span class="m">137</span> -j ACCEPT
+</span></span><span class="line"><span class="cl">iptables -A INPUT -p udp --dport <span class="m">138</span> -j ACCEPT
+</span></span><span class="line"><span class="cl">iptables -A INPUT -p tcp --dport <span class="m">139</span> -j ACCEPT
+</span></span><span class="line"><span class="cl">iptables -A INPUT -p tcp --dport <span class="m">445</span> -j ACCEPT
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Use the command <code>testparm</code> to test your config file if needed, start the service with your system&rsquo;s init daemon, and run the guest machine.</p>
+<p>If you are running Windows, head over to the Network tab in File Explorer and type <code>\\[IP address/hostname]</code>. Enter your credentials to access the content.</p>
+<p>If you are running Linux with a desktop environment, you can use your default file explorer to access the folder. For Nautilus, go to File -&gt; Connect to Server, choose Windows share from the list, and enter the IP address/hostname; for Dolphin, go to Network and type <code>smb://[IP address/hostname]</code>into the top bar. If your file explorer does not offer the option, use the following command:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mount -t cifs //host_IP/sharename /mount/path -o <span class="nv">username</span><span class="o">=</span>user,password<span class="o">=</span>password
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>To auto-mount the folder, write the following into your <code>/etc/fstab</code>:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">//host_IP/sharename	/mount/path	cifs  <span class="nv">username</span><span class="o">=</span>user,password<span class="o">=</span>password,nofail,_netdev	0	<span class="m">0</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="nfs">NFS</h2>
+<p>NFS is a distributed file protocol that relies on remote procedure calls to provide transparent file access. You could work with it on Windows by enabling the service. It is fairly easy to setup too (~wait didn&rsquo;t I say this for all of them~).</p>
+<p>Install the NFS util package on both the host and the client and create a shared directory.</p>
+<p>Now open the config file <code>/etc/exports</code> and type the following into it to allow the directory to be shared:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">/shared/directory	192.168.122.1/24<span class="o">(</span>rw,fsid<span class="o">=</span>0,sync,crossmnt<span class="o">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>fsid=0</code> specifies the root directory, and <code>crossmnt</code> saves you some time for not having to mount each child export individually when you have multiple directories to share. You can omit <code>sync</code> if you wish to use <code>async</code>, the default option that guarantees better performance yet also higher chance of data corruption since it does not wait for data to be completely written to the disk. The address range limits accesses to the specific subnet our virtual machine is on.</p>
+<p>Before starting the service, remember to enable the firewall. For ufw:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ufw allow nfs
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>For iptables:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">iptables -A INPUT -p tcp -m tcp --dport <span class="m">2049</span> -j ACCEPT
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Now start the service and head over to the client. Your desktop environment&rsquo;s default file explorer should have an option for NFS and the process should be similar to that of Samba. To manually mount the folder, use the command:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mount host_IP:/shared/directory /mount/path
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>To auto-mount the folder, write the following into your <code>/etc/fstab</code>:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">host_IP:/shared/directory	/mount/path	nfs	defaults,nofail,_netdev	0	<span class="m">0</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><hr>
+<p>Above is a summary of all the methods I know of on how to share folders. BTW I didn&rsquo;t really test my <code>fstab</code> examples but I think they will work. Trust me, okay?</p>
+
+    
+  </article>
+  <div class="paginator">
+    
+    <a class="link" href="https://blog.midnight-rain.xyz/post/strategies-and-advices-for-spades/">← prev</a>
+    
+    
+    <a class="link" href="https://blog.midnight-rain.xyz/post/on-happiness/">next →</a>
+    
+  </div>
+  <div class="comment">
+    
+    
+    
+    
+    
+    
+  </div>
+  
+</main>
+
+    <footer id="footer">
+  <div>
+    <span>© 2019</span> - <span>2023</span>
+  </div>
+
+  <div>
+    <span>Powered by </span>
+    <a class="link" href="https://gohugo.io/">Hugo</a>
+    <span> Theme </span>
+    <a class="link" href="https://github.com/queensferryme/hugo-theme-texify">TeXify</a>
+  </div>
+ <div>
+	 <a class="link" href="https://blog.midnight-rain.xyz/index.xml">RSS</a>
+</footer>
+
+  </div>
+
+  
+  
+
+  
+  
+
+  
+  
+
+</body>
+
+</html>

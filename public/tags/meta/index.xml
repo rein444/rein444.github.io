@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>meta on Midnight Rain Blog</title>
+    <link>https://blog.midnight-rain.xyz/tags/meta/</link>
+    <description>Recent content in meta on Midnight Rain Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <managingEditor>rein@fedora.email (rein)</managingEditor>
+    <webMaster>rein@fedora.email (rein)</webMaster>
+    <lastBuildDate>Sat, 12 Aug 2023 20:43:49 -0400</lastBuildDate><atom:link href="https://blog.midnight-rain.xyz/tags/meta/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>First Post</title>
+      <link>https://blog.midnight-rain.xyz/post/firstpost/</link>
+      <pubDate>Sat, 12 Aug 2023 20:43:49 -0400</pubDate>
+      <author>rein@fedora.email (rein)</author>
+      <guid>https://blog.midnight-rain.xyz/post/firstpost/</guid>
+      
+      <description>&lt;p&gt;Welcome to my blog! This is a checkmark post to test if Hugo runs correctly. Everything posted earlier are transferred from my old blog, which is why you might see some weird formatting issues.&lt;/p&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>Some Quick Updates</title>
+      <link>https://blog.midnight-rain.xyz/post/some-quick-updates/</link>
+      <pubDate>Sat, 22 Oct 2022 17:19:11 +0000</pubDate>
+      <author>rein@fedora.email (rein)</author>
+      <guid>https://blog.midnight-rain.xyz/post/some-quick-updates/</guid>
+      
+      <description>&lt;ul&gt;
+&lt;li&gt;The personal website/landing page is migrated to a different VPS.&lt;/li&gt;
+&lt;li&gt;Cloudflare service is now completely yeeted. I should have done this earlier.&lt;/li&gt;
+&lt;li&gt;Well yeah you could figure out these on your own but I felt like announcing them.&lt;/li&gt;
+&lt;li&gt;I was browsing some newsletter softwares and they all look very soy. Most of my readers use RSS anyway so I wouldn&amp;rsquo;t venture into it.&lt;/li&gt;
+&lt;li&gt;I reread my first post and realized that I am failing my promise. Maybe I will try to update more frequently.&lt;/li&gt;
+&lt;li&gt;Thank you for supporting the blog :&amp;gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>First Post !!!</title>
+      <link>https://blog.midnight-rain.xyz/post/first-post/</link>
+      <pubDate>Mon, 22 Feb 2021 11:10:13 +0000</pubDate>
+      <author>rein@fedora.email (rein)</author>
+      <guid>https://blog.midnight-rain.xyz/post/first-post/</guid>
+      
+      <description>&lt;p&gt;So as you can see, I have decided to give gridea a try since it looks easy to configure and use. It&amp;rsquo;&amp;rsquo;s a great static blog writing client for lazy people and non-techies. They should really promote themselves more instead of only focusing on Chinese users but somehow they didn&amp;rsquo;t even manage to add English translation to their website.&lt;/p&gt;
+&lt;p&gt;Btw they support linux.&lt;/p&gt;
+&lt;p&gt;I guess I will use it for few more weeks and decide if I like it or not.&lt;/p&gt;
+&lt;p&gt;This blog does not have any specific theme. I will try to update it at least once a month or even better, once a week. It would be good if you are willing to provide any feedback as it might encourage me to continue writing. But if you don&amp;rsquo;t care, that&amp;rsquo;s okay too. Just contact me by ways listed &lt;a href=&#39;https://tapiocanation.xyz/contact.html&#39; style=&#39;color: #756e66&#39;&gt;here&lt;/a&gt;. Comment system willl not be implemented because I dislike them on blogs.&lt;/p&gt;
+&lt;p&gt;Enjoy.&lt;/p&gt;
+</description>
+      
+    </item>
+    
+  </channel>
+</rss>
