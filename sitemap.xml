@@ -2,16 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://midnight-rain.xyz/about/</loc>
+    <loc>https://blog.midnight-rain.xyz/about/</loc>
     <lastmod>2023-08-12T18:42:07-04:00</lastmod>
   </url><url>
-    <loc>https://midnight-rain.xyz/archives/</loc>
+    <loc>https://blog.midnight-rain.xyz/archives/</loc>
     <lastmod>2019-05-28T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://midnight-rain.xyz/</loc>
+    <loc>https://blog.midnight-rain.xyz/</loc>
   </url><url>
-    <loc>https://midnight-rain.xyz/series/</loc>
+    <loc>https://blog.midnight-rain.xyz/series/</loc>
   </url><url>
-    <loc>https://midnight-rain.xyz/tags/</loc>
+    <loc>https://blog.midnight-rain.xyz/tags/</loc>
   </url>
 </urlset>

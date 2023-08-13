@@ -1,2 +1,2 @@
 User-agent: *
-Sitemap: https://midnight-rain.xyz/sitemap.xml
+Sitemap: https://blog.midnight-rain.xyz/sitemap.xml
