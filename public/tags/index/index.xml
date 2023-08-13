@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>index on Midnight Rain Blog</title>
+    <link>https://blog.midnight-rain.xyz/tags/index/</link>
+    <description>Recent content in index on Midnight Rain Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <managingEditor>rein@fedora.email (rein)</managingEditor>
+    <webMaster>rein@fedora.email (rein)</webMaster><atom:link href="https://blog.midnight-rain.xyz/tags/index/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Posts</title>
+      <link>https://blog.midnight-rain.xyz/post/</link>
+      <pubDate>Sat, 12 Aug 2023 20:43:49 -0400</pubDate>
+      <author>rein@fedora.email (rein)</author>
+      <guid>https://blog.midnight-rain.xyz/post/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+  </channel>
+</rss>

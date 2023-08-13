@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Midnight Rain Blog</title>
+    <link>https://blog.midnight-rain.xyz/</link>
+    <description>Recent content on Midnight Rain Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <managingEditor>rein@fedora.email (rein)</managingEditor>
+    <webMaster>rein@fedora.email (rein)</webMaster>
+    <lastBuildDate>Sat, 12 Aug 2023 20:43:49 -0400</lastBuildDate><atom:link href="https://blog.midnight-rain.xyz/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>First Post</title>
+      <link>https://blog.midnight-rain.xyz/post/firstpost/</link>
+      <pubDate>Sat, 12 Aug 2023 20:43:49 -0400</pubDate>
+      <author>rein@fedora.email (rein)</author>
+      <guid>https://blog.midnight-rain.xyz/post/firstpost/</guid>
+      
+      <description>&lt;p&gt;Welcome to my blog! This is a post to test if everything works correctly.&lt;/p&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>About</title>
+      <link>https://blog.midnight-rain.xyz/about/</link>
+      <pubDate>Sat, 12 Aug 2023 18:42:07 -0400</pubDate>
+      <author>rein@fedora.email (rein)</author>
+      <guid>https://blog.midnight-rain.xyz/about/</guid>
+      
+      <description>&lt;p&gt;I am the owner of this site and you can call me rein. If you need to contact me, send an email to &lt;a href=&#34;mailto:rein@fedora.email&#34;&gt;rein@fedora.email&lt;/a&gt; and I will get back to you as soon as I can.&lt;/p&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://blog.midnight-rain.xyz/archives/</link>
+      <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
+      <author>rein@fedora.email (rein)</author>
+      <guid>https://blog.midnight-rain.xyz/archives/</guid>
+      
+      <description></description>
+      
+    </item>
+    
+  </channel>
+</rss>
