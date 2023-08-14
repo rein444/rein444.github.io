@@ -2,19 +2,25 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://blog.midnight-rain.xyz/</loc>
+    <lastmod>2023-08-12T23:01:44-04:00</lastmod>
+  </url><url>
+    <loc>https://blog.midnight-rain.xyz/post/</loc>
+    <lastmod>2023-08-12T23:01:44-04:00</lastmod>
+  </url><url>
+    <loc>https://blog.midnight-rain.xyz/post/setting-up-baikal-with-caddy-as-reverse-proxy-in-docker/</loc>
+    <lastmod>2023-08-12T23:01:44-04:00</lastmod>
+  </url><url>
+    <loc>https://blog.midnight-rain.xyz/tags/</loc>
+    <lastmod>2023-08-12T23:01:44-04:00</lastmod>
+  </url><url>
+    <loc>https://blog.midnight-rain.xyz/tags/tech/</loc>
+    <lastmod>2023-08-12T23:01:44-04:00</lastmod>
+  </url><url>
     <loc>https://blog.midnight-rain.xyz/post/firstpost/</loc>
     <lastmod>2023-08-12T20:43:49-04:00</lastmod>
   </url><url>
     <loc>https://blog.midnight-rain.xyz/tags/meta/</loc>
-    <lastmod>2023-08-12T20:43:49-04:00</lastmod>
-  </url><url>
-    <loc>https://blog.midnight-rain.xyz/</loc>
-    <lastmod>2023-08-12T20:43:49-04:00</lastmod>
-  </url><url>
-    <loc>https://blog.midnight-rain.xyz/post/</loc>
-    <lastmod>2023-08-12T20:43:49-04:00</lastmod>
-  </url><url>
-    <loc>https://blog.midnight-rain.xyz/tags/</loc>
     <lastmod>2023-08-12T20:43:49-04:00</lastmod>
   </url><url>
     <loc>https://blog.midnight-rain.xyz/about/</loc>
@@ -54,9 +60,6 @@
     <lastmod>2022-07-24T11:32:37+00:00</lastmod>
   </url><url>
     <loc>https://blog.midnight-rain.xyz/post/share-files-between-qemukvm-host-and-guest/</loc>
-    <lastmod>2022-05-06T11:29:14+00:00</lastmod>
-  </url><url>
-    <loc>https://blog.midnight-rain.xyz/tags/tech/</loc>
     <lastmod>2022-05-06T11:29:14+00:00</lastmod>
   </url><url>
     <loc>https://blog.midnight-rain.xyz/tags/game/</loc>

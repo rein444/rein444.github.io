@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  
+  <meta name="author" content="rein">
+
+  
+  
+  <meta name="description" content="Baikal is a lightweight CalDav/CardDav server that offers a web interface for management and is simple to setup. You can read more about the internet standards it supports here. If you are looking for an alternative for Baikal, check out Radicale. As far as I know, the main difference between these two is that instead of storing data in a SQL database, Radicale stores all information in .ics files. So far I am having no problem with Baikal (and by so far I mean&hellip;a week) and it is running stably.">
+  
+
+  
+  <link rel="icon" href="https://blog.midnight-rain.xyz/favicon.ico">
+
+  
+  
+  <meta name="keywords" content=" hugo  latex  theme ">
+  
+
+  
+  
+
+  
+  <meta property="og:title" content="Setting Up Baikal With Caddy as Reverse Proxy in Docker" />
+<meta property="og:description" content="Baikal is a lightweight CalDav/CardDav server that offers a web interface for management and is simple to setup. You can read more about the internet standards it supports here. If you are looking for an alternative for Baikal, check out Radicale. As far as I know, the main difference between these two is that instead of storing data in a SQL database, Radicale stores all information in .ics files. So far I am having no problem with Baikal (and by so far I mean&hellip;a week) and it is running stably." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blog.midnight-rain.xyz/post/setting-up-baikal-with-caddy-as-reverse-proxy-in-docker/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-08-12T23:01:44-04:00" />
+<meta property="article:modified_time" content="2023-08-12T23:01:44-04:00" />
+
+
+
+  
+  <link rel="canonical" href="https://blog.midnight-rain.xyz/post/setting-up-baikal-with-caddy-as-reverse-proxy-in-docker/">
+
+  
+  
+  <meta itemprop="name" content="Setting Up Baikal With Caddy as Reverse Proxy in Docker">
+<meta itemprop="description" content="Baikal is a lightweight CalDav/CardDav server that offers a web interface for management and is simple to setup. You can read more about the internet standards it supports here. If you are looking for an alternative for Baikal, check out Radicale. As far as I know, the main difference between these two is that instead of storing data in a SQL database, Radicale stores all information in .ics files. So far I am having no problem with Baikal (and by so far I mean&hellip;a week) and it is running stably."><meta itemprop="datePublished" content="2023-08-12T23:01:44-04:00" />
+<meta itemprop="dateModified" content="2023-08-12T23:01:44-04:00" />
+<meta itemprop="wordCount" content="992">
+<meta itemprop="keywords" content="tech," />
+
+  
+  <link media="screen" rel="stylesheet" href='https://blog.midnight-rain.xyz/css/common.css'>
+  <link media="screen" rel="stylesheet" href='https://blog.midnight-rain.xyz/css/content.css'>
+
+  
+  
+  <title>Setting Up Baikal With Caddy as Reverse Proxy in Docker - Midnight Rain Blog</title>
+  
+
+  
+  <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Setting Up Baikal With Caddy as Reverse Proxy in Docker"/>
+<meta name="twitter:description" content="Baikal is a lightweight CalDav/CardDav server that offers a web interface for management and is simple to setup. You can read more about the internet standards it supports here. If you are looking for an alternative for Baikal, check out Radicale. As far as I know, the main difference between these two is that instead of storing data in a SQL database, Radicale stores all information in .ics files. So far I am having no problem with Baikal (and by so far I mean&hellip;a week) and it is running stably."/>
+
+
+  
+<link rel="stylesheet" href='https://blog.midnight-rain.xyz/css/single.css'>
+
+</head>
+
+<body>
+  <div id="wrapper">
+    <header id="header">
+  <h1>
+    <a href="https://blog.midnight-rain.xyz">Midnight Rain Blog</a>
+  </h1>
+
+  <nav>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/">Post</a>
+    </span>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/post/">Archives</a>
+    </span>
+    
+    <span class="nav-bar-item">
+      <a class="link" href="/about/">About</a>
+    </span>
+    
+  </nav>
+</header>
+
+    
+<main id="main" class="post">
+  
+  
+  <h1>Setting Up Baikal With Caddy as Reverse Proxy in Docker</h1>
+  
+  <div>
+    <b>Keywords: </b>
+    
+    <a class="link" href='https://blog.midnight-rain.xyz/tags/tech'>#tech</a>
+    
+  </div>
+  
+  
+  <article class="content">
+    
+    <p>Baikal is a lightweight CalDav/CardDav server that offers a web interface for management and is simple to setup. You can read more about the internet standards it supports <a href="https://sabre.io/dav/">here</a>. If you are looking for an alternative for Baikal, check out <a href="https://radicale.org/v3.html">Radicale</a>. As far as I know, the main difference between these two is that instead of storing data in a SQL database, Radicale stores all information in .ics files. So far I am having no problem with Baikal (and by so far I mean&hellip;a week) and it is running stably.</p>
+<p>This post will be a short guide on how to run Baikal with a reverse proxy for SSL certificate in Docker and import settings to clients that support Dav synchronization.</p>
+<hr>
+<h2 id="server">Server</h2>
+<p>I used <a href="https://github.com/ckulka/baikal-docker">this premade Docker image</a> to run Baikal with Docker Compose. The creater of the repo recommended Traefik for HTTPS support but I found Traefik to be a pain in the ass to configure, so in this guide I will be using Caddy.</p>
+<p>First, create a network dedicated for containers that you will put behind the Caddy proxy.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">docker network create caddy
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Create a Caddyfile, preferably in the same folder where you will place your Docker Compose file but it can be anywhere you want.</p>
+<p>In the <code>docker-compose.yaml</code> for Caddy, write this:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;3.7&#39;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">networks</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">external</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">caddy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">caddy</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l">caddy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">caddy:latest</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l">unless-stopped</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="s2">&#34;80:80&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="s2">&#34;443:443&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">/path/to/Caddyfile:/etc/caddy/Caddyfile</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">/path/to/site:/srv</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">caddy_data:/data</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">caddy_config:/config</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">caddy_data</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">caddy_config</span><span class="p">:</span><span class="w">
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>caddy_data</code> and <code>caddy_config</code> are optional and according to the documentation, you can define the data volume as external to make sure <code>docker-compose down</code> does not delete it.</p>
+<p>Before you put Baikal on the caddy network, you can check whether it is running fine with the default config to facilitate troubleshooting later. Create a folder for Baikal, and fetch the default config from the repo.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">wget https://raw.githubusercontent.com/ckulka/baikal-docker/master/examples/docker-compose.yaml
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>The default config is exposing the HTTP port 80, but I mapped it to something else. This part is not necessary. You can start the container now.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">docker-compose up -d
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Verify that Baikal runs correctly by typing your public IP into the browser and you should be able to see the installation page. A troubleshooting section is also provided in the end of the guide.</p>
+<p>Now we are ready to encrypt the connection. Overwrite the following into your <code>docker-compose.yaml</code> for baikal:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="c"># Docker Compose file for a Baikal server</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;2&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">networks</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">external</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">caddy</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">baikal</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">ckulka/baikal:nginx</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l">baikal</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l">always</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="s2">&#34;[bounded port]:80&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">config:/var/www/baikal/config</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span>- <span class="l">data:/var/www/baikal/Specific</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">config</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">data</span><span class="p">:</span><span class="w">
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>Go back to your Caddyfile and write the following:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">{
+</span></span><span class="line"><span class="cl">   email user@yourdomain.com
+</span></span><span class="line"><span class="cl">}
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">yourdomain.com {
+</span></span><span class="line"><span class="cl">   reverse_proxy baikal:80 
+</span></span><span class="line"><span class="cl">}
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Start the caddy container and check if HTTPS is enabled for the domain you linked to the server&rsquo;s IP address. Complete the setup and in the database section, select MySQL if you are going to have a large database. It will not be automatically configured so do it yourself on the server.</p>
+<p>Once you are logged in, go to &ldquo;Users and resources&rdquo; and create as many users as needed.</p>
+<hr>
+<h2 id="client">Client</h2>
+<p>On Android devides, download <a href="https://www.davx5.com/">DAVx⁵</a>. To import your account, choose the &ldquo;Login with URL and user name&rdquo; option and put &ldquo;<a href="https://yourdomain.com/dav.php%22">https://yourdomain.com/dav.php&quot;</a> for base URL. After that, synchronize both empty folders. This step might not be necessary, but I can&rsquo;t access the Dav synchonization option in other apps if I haven&rsquo;t done so.</p>
+<p>I use <a href="https://f-droid.org/en/packages/com.simplemobiletools.calendar.pro/">Simple Calender</a> and it is able to discover my synced calender when I checked the option in the settings. For contact, I use the default Contacts app that came with the OS and it picked up the synced address book automatically.</p>
+<p>On the laptop, I use <a href="https://www.thunderbird.net/en-US/">Thunderbird</a>. When it prompts for whether you want to create a new calender/address book, just select &ldquo;On the Network&rdquo; and type the same address you used for base url in the DAVx⁵ app.</p>
+<hr>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ol>
+<li><em><strong>Unable to connect to the server with the default config</strong></em></li>
+</ol>
+<p>First, make sure that Baikal is actually running with the command <code>docker -ps</code>. Next, check if the firewall has port 80 and 443 opened. With ufw, you can simply issue <code>ufw allow http</code> and <code>ufw allow https</code>.</p>
+<p>If you are mapping a port other than 80, make sure to add &ldquo;:the-port-you-chose&rdquo; after the IP address when you type into the browser.</p>
+<ol start="2">
+<li><em><strong>Able to connect to the server with the default config, but not with Caddy</strong></em></li>
+</ol>
+<p>Again, check if the container is running and if the Caddyfile you just edited is correctly synced with the command <code>docker exec caddy cat /etc/caddy/Caddyfile</code>. If it doesn&rsquo;t match with what you wrote, execute <code>docker exec -w /etc/caddy caddy caddy reload</code>. Pay attention to the <code>reverse_proxy</code> line in your Caddyfile and use the port that the Docker network is listening to (in this case, 80) rather than the port assigned to the server.</p>
+<p>Also check if the path to Caddyfile and the domain name are typed correctly.</p>
+<p>Otherwise, check the DNS setting with your domain name registar and ping the domain to see if the A Record is pointing your domain to the right server.</p>
+<ol start="3">
+<li><em><strong>The port failed to bind</strong></em></li>
+</ol>
+<p>There is an existing service running that conflicts with the port you exposed on the server. Find the service by running <code>netstat -ltpn | grep [port-num]</code> and terminate it or assign a different port.</p>
+<ol start="4">
+<li><em><strong>Unable to connect to the server via URL</strong></em></li>
+</ol>
+<p>Try a different URL. Here is a list of examples to try:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">https://yourdomain.com/baikal/dav.php/
+</span></span><span class="line"><span class="cl">https://yourdomain.com/baikal/html/dav.php/
+</span></span><span class="line"><span class="cl">https://yourdomain.com/baikal/cal.php/calendars/username/default
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>The <a href="https://sabre.io/baikal/troubleshooting/">official documentation</a> mentioned that Windows 10 clients do not support Digest authentication, so switch to Basic auth.</p>
+
+    
+  </article>
+  <div class="paginator">
+    
+    <a class="link" href="https://blog.midnight-rain.xyz/post/firstpost/">← prev</a>
+    
+    
+    <a></a>
+    
+  </div>
+  <div class="comment">
+    
+    
+    
+    
+    
+    
+  </div>
+  
+</main>
+
+    <footer id="footer">
+  <div>
+    <span>© 2019</span> - <span>2023</span>
+  </div>
+
+  <div>
+    <span>Powered by </span>
+    <a class="link" href="https://gohugo.io/">Hugo</a>
+    <span> Theme </span>
+    <a class="link" href="https://github.com/queensferryme/hugo-theme-texify">TeXify</a>
+  </div>
+ <div>
+	 <a class="link" href="https://blog.midnight-rain.xyz/index.xml">RSS</a>
+</footer>
+
+  </div>
+
+  
+  
+
+  
+  
+
+  
+  
+
+</body>
+
+</html>

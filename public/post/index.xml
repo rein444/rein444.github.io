@@ -8,7 +8,227 @@
     <language>en</language>
     <managingEditor>rein@fedora.email (rein)</managingEditor>
     <webMaster>rein@fedora.email (rein)</webMaster>
-    <lastBuildDate>Sat, 12 Aug 2023 20:43:49 -0400</lastBuildDate><atom:link href="https://blog.midnight-rain.xyz/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 12 Aug 2023 23:01:44 -0400</lastBuildDate><atom:link href="https://blog.midnight-rain.xyz/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Setting Up Baikal With Caddy as Reverse Proxy in Docker</title>
+      <link>https://blog.midnight-rain.xyz/post/setting-up-baikal-with-caddy-as-reverse-proxy-in-docker/</link>
+      <pubDate>Sat, 12 Aug 2023 23:01:44 -0400</pubDate>
+      <author>rein@fedora.email (rein)</author>
+      <guid>https://blog.midnight-rain.xyz/post/setting-up-baikal-with-caddy-as-reverse-proxy-in-docker/</guid>
+      
+      <description>&lt;p&gt;Baikal is a lightweight CalDav/CardDav server that offers a web interface for management and is simple to setup. You can read more about the internet standards it supports &lt;a href=&#34;https://sabre.io/dav/&#34;&gt;here&lt;/a&gt;. If you are looking for an alternative for Baikal, check out &lt;a href=&#34;https://radicale.org/v3.html&#34;&gt;Radicale&lt;/a&gt;. As far as I know, the main difference between these two is that instead of storing data in a SQL database, Radicale stores all information in .ics files. So far I am having no problem with Baikal (and by so far I mean&amp;hellip;a week) and it is running stably.&lt;/p&gt;
+&lt;p&gt;This post will be a short guide on how to run Baikal with a reverse proxy for SSL certificate in Docker and import settings to clients that support Dav synchronization.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;server&#34;&gt;Server&lt;/h2&gt;
+&lt;p&gt;I used &lt;a href=&#34;https://github.com/ckulka/baikal-docker&#34;&gt;this premade Docker image&lt;/a&gt; to run Baikal with Docker Compose. The creater of the repo recommended Traefik for HTTPS support but I found Traefik to be a pain in the ass to configure, so in this guide I will be using Caddy.&lt;/p&gt;
+&lt;p&gt;First, create a network dedicated for containers that you will put behind the Caddy proxy.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;docker network create caddy
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;Create a Caddyfile, preferably in the same folder where you will place your Docker Compose file but it can be anywhere you want.&lt;/p&gt;
+&lt;p&gt;In the &lt;code&gt;docker-compose.yaml&lt;/code&gt; for Caddy, write this:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;18
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;19
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;20
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;21
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;22
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;23
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;24
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;25
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nt&#34;&gt;version&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;3.7&amp;#39;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;networks&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;default&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;external&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;l&#34;&gt;caddy&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;services&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;caddy&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;container_name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;l&#34;&gt;caddy&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;image&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;l&#34;&gt;caddy:latest&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;restart&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;l&#34;&gt;unless-stopped&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;ports&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;- &lt;span class=&#34;s2&#34;&gt;&amp;#34;80:80&amp;#34;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;- &lt;span class=&#34;s2&#34;&gt;&amp;#34;443:443&amp;#34;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;volumes&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;- &lt;span class=&#34;l&#34;&gt;/path/to/Caddyfile:/etc/caddy/Caddyfile&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;- &lt;span class=&#34;l&#34;&gt;/path/to/site:/srv&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;- &lt;span class=&#34;l&#34;&gt;caddy_data:/data&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;- &lt;span class=&#34;l&#34;&gt;caddy_config:/config&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;volumes&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;caddy_data&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;caddy_config&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;&lt;code&gt;caddy_data&lt;/code&gt; and &lt;code&gt;caddy_config&lt;/code&gt; are optional and according to the documentation, you can define the data volume as external to make sure &lt;code&gt;docker-compose down&lt;/code&gt; does not delete it.&lt;/p&gt;
+&lt;p&gt;Before you put Baikal on the caddy network, you can check whether it is running fine with the default config to facilitate troubleshooting later. Create a folder for Baikal, and fetch the default config from the repo.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;wget https://raw.githubusercontent.com/ckulka/baikal-docker/master/examples/docker-compose.yaml
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;The default config is exposing the HTTP port 80, but I mapped it to something else. This part is not necessary. You can start the container now.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;docker-compose up -d
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;Verify that Baikal runs correctly by typing your public IP into the browser and you should be able to see the installation page. A troubleshooting section is also provided in the end of the guide.&lt;/p&gt;
+&lt;p&gt;Now we are ready to encrypt the connection. Overwrite the following into your &lt;code&gt;docker-compose.yaml&lt;/code&gt; for baikal:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;18
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;19
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;20
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;21
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;22
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;23
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;24
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c&#34;&gt;# Docker Compose file for a Baikal server&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;version&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;#34;2&amp;#34;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;networks&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;default&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;external&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;l&#34;&gt;caddy&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;services&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;baikal&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;image&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;l&#34;&gt;ckulka/baikal:nginx&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;container_name&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;l&#34;&gt;baikal&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;restart&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt; &lt;/span&gt;&lt;span class=&#34;l&#34;&gt;always&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;ports&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;- &lt;span class=&#34;s2&#34;&gt;&amp;#34;[bounded port]:80&amp;#34;&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;    &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;volumes&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;- &lt;span class=&#34;l&#34;&gt;config:/var/www/baikal/config&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;      &lt;/span&gt;- &lt;span class=&#34;l&#34;&gt;data:/var/www/baikal/Specific&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;&lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;volumes&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;config&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;w&#34;&gt;  &lt;/span&gt;&lt;span class=&#34;nt&#34;&gt;data&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;w&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;Go back to your Caddyfile and write the following:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;7
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;   email user@yourdomain.com
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;yourdomain.com {
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;   reverse_proxy baikal:80 
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;Start the caddy container and check if HTTPS is enabled for the domain you linked to the server&amp;rsquo;s IP address. Complete the setup and in the database section, select MySQL if you are going to have a large database. It will not be automatically configured so do it yourself on the server.&lt;/p&gt;
+&lt;p&gt;Once you are logged in, go to &amp;ldquo;Users and resources&amp;rdquo; and create as many users as needed.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;client&#34;&gt;Client&lt;/h2&gt;
+&lt;p&gt;On Android devides, download &lt;a href=&#34;https://www.davx5.com/&#34;&gt;DAVx⁵&lt;/a&gt;. To import your account, choose the &amp;ldquo;Login with URL and user name&amp;rdquo; option and put &amp;ldquo;&lt;a href=&#34;https://yourdomain.com/dav.php%22&#34;&gt;https://yourdomain.com/dav.php&amp;quot;&lt;/a&gt; for base URL. After that, synchronize both empty folders. This step might not be necessary, but I can&amp;rsquo;t access the Dav synchonization option in other apps if I haven&amp;rsquo;t done so.&lt;/p&gt;
+&lt;p&gt;I use &lt;a href=&#34;https://f-droid.org/en/packages/com.simplemobiletools.calendar.pro/&#34;&gt;Simple Calender&lt;/a&gt; and it is able to discover my synced calender when I checked the option in the settings. For contact, I use the default Contacts app that came with the OS and it picked up the synced address book automatically.&lt;/p&gt;
+&lt;p&gt;On the laptop, I use &lt;a href=&#34;https://www.thunderbird.net/en-US/&#34;&gt;Thunderbird&lt;/a&gt;. When it prompts for whether you want to create a new calender/address book, just select &amp;ldquo;On the Network&amp;rdquo; and type the same address you used for base url in the DAVx⁵ app.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;troubleshooting&#34;&gt;Troubleshooting&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;em&gt;&lt;strong&gt;Unable to connect to the server with the default config&lt;/strong&gt;&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;First, make sure that Baikal is actually running with the command &lt;code&gt;docker -ps&lt;/code&gt;. Next, check if the firewall has port 80 and 443 opened. With ufw, you can simply issue &lt;code&gt;ufw allow http&lt;/code&gt; and &lt;code&gt;ufw allow https&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;If you are mapping a port other than 80, make sure to add &amp;ldquo;:the-port-you-chose&amp;rdquo; after the IP address when you type into the browser.&lt;/p&gt;
+&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;&lt;em&gt;&lt;strong&gt;Able to connect to the server with the default config, but not with Caddy&lt;/strong&gt;&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Again, check if the container is running and if the Caddyfile you just edited is correctly synced with the command &lt;code&gt;docker exec caddy cat /etc/caddy/Caddyfile&lt;/code&gt;. If it doesn&amp;rsquo;t match with what you wrote, execute &lt;code&gt;docker exec -w /etc/caddy caddy caddy reload&lt;/code&gt;. Pay attention to the &lt;code&gt;reverse_proxy&lt;/code&gt; line in your Caddyfile and use the port that the Docker network is listening to (in this case, 80) rather than the port assigned to the server.&lt;/p&gt;
+&lt;p&gt;Also check if the path to Caddyfile and the domain name are typed correctly.&lt;/p&gt;
+&lt;p&gt;Otherwise, check the DNS setting with your domain name registar and ping the domain to see if the A Record is pointing your domain to the right server.&lt;/p&gt;
+&lt;ol start=&#34;3&#34;&gt;
+&lt;li&gt;&lt;em&gt;&lt;strong&gt;The port failed to bind&lt;/strong&gt;&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;There is an existing service running that conflicts with the port you exposed on the server. Find the service by running &lt;code&gt;netstat -ltpn | grep [port-num]&lt;/code&gt; and terminate it or assign a different port.&lt;/p&gt;
+&lt;ol start=&#34;4&#34;&gt;
+&lt;li&gt;&lt;em&gt;&lt;strong&gt;Unable to connect to the server via URL&lt;/strong&gt;&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Try a different URL. Here is a list of examples to try:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;https://yourdomain.com/baikal/dav.php/
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;https://yourdomain.com/baikal/html/dav.php/
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;https://yourdomain.com/baikal/cal.php/calendars/username/default
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;The &lt;a href=&#34;https://sabre.io/baikal/troubleshooting/&#34;&gt;official documentation&lt;/a&gt; mentioned that Windows 10 clients do not support Digest authentication, so switch to Basic auth.&lt;/p&gt;
+</description>
+      
+    </item>
+    
     <item>
       <title>First Post</title>
       <link>https://blog.midnight-rain.xyz/post/firstpost/</link>
@@ -308,17 +528,17 @@ Yeah, another .ru domain. I don&amp;rsquo;t have anything to say about this one 
 &lt;p&gt;I was also listening to some newer Vocaloid/UTAU songs that got out in the recent five years (maybe not that new after all). Here are some artists I have listened to and my favorite piece by them:&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://www.youtube.com/channel/UCraC7460yGQF4GDmSjCecpQ/videos&#34;&gt;&lt;em&gt;syudou&lt;/em&gt;&lt;/a&gt;
 Syudou is not a new producer, but he wasn&amp;rsquo;t very famous in the circle (?) and his style has changed A LOT in the past several years, which allows more people to discover his works. I have mixed opinions on his new songs, since most of them have wordsmith level use of lyrics but they are still a bit&amp;hellip; I-write-whatever-zoomers-like-so-they-will-worship-me pilled. Perhaps I have this opinion only because I knew of him through &lt;a href=&#34;https://youtu.be/6uR_UxqGoug&#34;&gt;Ado&amp;rsquo;s cover of 邪魔&lt;/a&gt;, and most of his later works sound like they are written for her throat specifically.&lt;/p&gt;
-&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/EP_3-Qkrq60&#34; title=&#34;YouTube video player&#34; frameborder=&#34;0&#34; allow=&#34;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&#34; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;!-- raw HTML omitted --&gt;
 &lt;p&gt;&lt;a href=&#34;https://www.youtube.com/c/%E3%81%BA%E3%81%BD%E3%82%88pepoyoPPY/videos&#34;&gt;&lt;em&gt;ぺぽよ&lt;/em&gt;&lt;/a&gt;
 I found ぺぽよ by らくらく安楽死, a suicidal song that got extremely popular and started popping out on everywhere recently, also highly addictive. I like how she used VY1 for harmony, something I wouldn&amp;rsquo;t notice without reading the comments. What shocks me more is her newest song &lt;a href=&#34;https://youtu.be/lRi2xK_Bb_M&#34;&gt;のろいのノイローゼ&lt;/a&gt;. It gives me the impression of a person who has zero knowledge in music theory (which is actually me) trying to write a song by going with whatever note that jumped out from the brain but the final work ends up being great. Most of her songs are depressive, and I heard that the producer is dealing with mental illnesses.&lt;/p&gt;
-&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/luqeDKM4TAQ&#34; title=&#34;YouTube video player&#34; frameborder=&#34;0&#34; allow=&#34;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&#34; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;!-- raw HTML omitted --&gt;
 &lt;p&gt;&lt;a href=&#34;https://www.youtube.com/c/GigaVideos/videos&#34;&gt;&lt;em&gt;Giga&lt;/em&gt;&lt;/a&gt;
 Giga&amp;rsquo;s songs remind me of Reol, but vocaloid. They are catchy, modern, and obsessed with fancy visuals if you watch any of the videos. It&amp;rsquo;s not too unique for J-pop, but quite unique in vocaloid, or at least that&amp;rsquo;s how I feel. Some of his songs also resemble KIRA&amp;rsquo;s style a little bit, and then I realized they are actually collaboration videos with KIRA xD
 (Sorry, no favorite piece)&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://www.youtube.com/channel/UCgf4ASaUXSl960o8wXWHGdQ/videos&#34;&gt;&lt;em&gt;柊キライ&lt;/em&gt;&lt;/a&gt;
 Yeah, I could safely say that I am not a big fan of 柊キライ. Same problem as Syudou, his(or her?) lyrics are filled with edgy teenager angst. I enjoy listening to them as a banger, but not something I would want to put on a loop. If I recall correctly, 柊キライ is also the producer who popularized the &amp;ldquo;special&amp;rdquo; use of Flower that makes her voice sound hoarse. Many hate it, but I find it interesting.
 (cringe, but addictive)&lt;/p&gt;
-&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/wp9Z2wZ-2bs&#34; title=&#34;YouTube video player&#34; frameborder=&#34;0&#34; allow=&#34;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&#34; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;!-- raw HTML omitted --&gt;
 &lt;p&gt;&lt;strong&gt;Bandcamp&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;Bandcamp is the best place to discover some niche albums. I haven&amp;rsquo;t been on it very often though since I just stick to radios or Youtube when I am not listening to local music on my device.&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://vacationbibleschool.bandcamp.com/album/v-i-r-t-u-a-l-w-o-r-s-h-i-p&#34;&gt;&lt;em&gt;v i r t u a l _ w o r s h i p&lt;/em&gt; -  Vacation Bible School&lt;/a&gt;
@@ -336,22 +556,22 @@ The artist is featured on a breakcore playlist on Youtube and that&amp;rsquo;s h
 &lt;p&gt;&lt;strong&gt;Other Stuff&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;&lt;em&gt;POWERNOISE/ EXPERIMENTAL &amp;amp; POST-INDUSTRIAL selected tracks. by Simplexia&lt;/em&gt;
 Yeah I listen to this unironically. It is actually very calming.&lt;/p&gt;
-&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/ZpH-ZAfJ7Rg&#34; title=&#34;YouTube video player&#34; frameborder=&#34;0&#34; allow=&#34;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&#34; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;!-- raw HTML omitted --&gt;
 &lt;p&gt;&lt;em&gt;【早課】Morning chanting&lt;/em&gt;
 I listen to this when I am not listening to Orthodox chants.&lt;/p&gt;
-&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/UDLJ-6IUI-s&#34; title=&#34;YouTube video player&#34; frameborder=&#34;0&#34; allow=&#34;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&#34; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;!-- raw HTML omitted --&gt;
 &lt;p&gt;&lt;em&gt;Flesh, Blood, &amp;amp; Concrete - Full Soundtrack&lt;/em&gt;
 This showed up on my front page and it&amp;rsquo;s AMAAAAAAAZING. It would be my top choice for ambient for a while. I searched up the game and it looks interesting so I might play it sometime soon.&lt;/p&gt;
-&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/qSiIStdpY48&#34; title=&#34;YouTube video player&#34; frameborder=&#34;0&#34; allow=&#34;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&#34; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;!-- raw HTML omitted --&gt;
 &lt;p&gt;&lt;em&gt;Gone (Concept Album)&lt;/em&gt;
 Another breakcore album. The tracks are supposed to be random unreleased works of the artist yet they sound very coherent together, if coherent is the right word.&lt;/p&gt;
-&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/7xzfqH3ksZc&#34; title=&#34;YouTube video player&#34; frameborder=&#34;0&#34; allow=&#34;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&#34; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;!-- raw HTML omitted --&gt;
 &lt;p&gt;&lt;em&gt;Tame Impala - The Boat I Row&lt;/em&gt;
 Recommended by a friend. It&amp;rsquo;s good indeed.&lt;/p&gt;
-&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/j706aSetFbI&#34; title=&#34;YouTube video player&#34; frameborder=&#34;0&#34; allow=&#34;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&#34; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;!-- raw HTML omitted --&gt;
 &lt;p&gt;&lt;em&gt;Feint - Outbreak (feat. MYLK)&lt;/em&gt;
 Heard on OSU. I like it.&lt;/p&gt;
-&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/2PD1I5k0-ZY&#34; title=&#34;YouTube video player&#34; frameborder=&#34;0&#34; allow=&#34;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&#34; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;!-- raw HTML omitted --&gt;
 &lt;p&gt;As you can see already, I mostly listen to instrumental and electronic music. I used to listen to metal, but now I rarely do. Nowadays vocaloid might be the only music I listen to that has lyrics lol&lt;/p&gt;
 </description>
       
@@ -623,86 +843,6 @@ Heard on OSU. I like it.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;&lt;hr&gt;
 &lt;p&gt;Above is a summary of all the methods I know of on how to share folders. BTW I didn&amp;rsquo;t really test my &lt;code&gt;fstab&lt;/code&gt; examples but I think they will work. Trust me, okay?&lt;/p&gt;
-</description>
-      
-    </item>
-    
-    <item>
-      <title>Strategies and Advices For Spades</title>
-      <link>https://blog.midnight-rain.xyz/post/strategies-and-advices-for-spades/</link>
-      <pubDate>Wed, 30 Mar 2022 23:38:33 +0000</pubDate>
-      <author>rein@fedora.email (rein)</author>
-      <guid>https://blog.midnight-rain.xyz/post/strategies-and-advices-for-spades/</guid>
-      
-      <description>&lt;p&gt;As the title says, just some random strategies and advices for the famous card game Spades. I tried to make them organized but they are still a bit messy.&lt;/p&gt;
-&lt;p&gt;This article assumes that you do not have a long term partner whom you can negotiate conventions with.&lt;/p&gt;
-&lt;hr&gt;
-&lt;h2 id=&#34;bidding&#34;&gt;Bidding&lt;/h2&gt;
-&lt;h3 id=&#34;regular-bid&#34;&gt;Regular Bid&lt;/h3&gt;
-&lt;p&gt;Always count Aces for non-spade suits and Kings if the suit has &amp;lt;6 cards.&lt;/p&gt;
-&lt;p&gt;Do not count anything below Queen for non-spade.&lt;/p&gt;
-&lt;p&gt;Count 1 for void and singleton, or 2 if the hand is strong enough. Check others&amp;rsquo; biddings and the rank of your spades to see if you can safely count 1 for doubleton. If you have a weak spade suit, there is a chance to get overruffed by your opponent.&lt;/p&gt;
-&lt;p&gt;It should be pretty much common sense, but do not rely on a singleton honor card ANYTIME FOR ANY SUIT since it is likely to be covered by an Ace.&lt;/p&gt;
-&lt;p&gt;Count the Ace for spade; King if they are not isolated by themselves; Queen and Jack if you have more than 3 cards; additional tricks if you have more than 4 spades even if they are not high in value.&lt;/p&gt;
-&lt;p&gt;Count all the spades if you have Ace, King, and Queen together. Minus 1 if you only have 2 of them. If you have the Ace-King-Jack combination with other supporting spades, you could count 3 and try a finesse during the game.&lt;/p&gt;
-&lt;p&gt;Many people bid very low when they have an overwhelming amount of Queens and Jacks but no Kings or Aces in hope of bagging their opponents. You could do that if you have an imbalanced hand (ex. combination of short suits containing low numeral cards and long suits containing Queen/Jack/high numeral cards), but sometimes you would end up bagging yourself if you have a balanced hand with a concentration of mid-high cards and the total bid is around 9 to 11. And to be honest, go nil if the first case describes you and you meet all the requirements in the Nil Bid section.&lt;/p&gt;
-&lt;p&gt;Don&amp;rsquo;t lie on your bid. Your opponents and partner usually have the intelligence to rely on their own card information first.&lt;/p&gt;
-&lt;p&gt;Last point: consider seat position, especially if you are in the 4th. If you are in the 4th, make sure the total bid does not go beyond 13 unless you are very confident. It is also a good chance to reevaluate the possibility of a nil bid if you have intended to do so.&lt;/p&gt;
-&lt;p&gt;Last last point: do not be greedy when you are close to winning. Bid 1 even if you are 90% sure you can make 2 unless bags are a issue.&lt;/p&gt;
-&lt;h3 id=&#34;nil-bid&#34;&gt;Nil Bid&lt;/h3&gt;
-&lt;p&gt;It is usually safe to bid nil if you have a long suit &amp;gt;5. I would sometimes make sure I have two cards below 7 to discard. If you have a balanced hand, you would need to observe what others bid more carefully but I would say that it is still safe if they are low in value.&lt;/p&gt;
-&lt;p&gt;Watch your partner&amp;rsquo;s bid carefully. It might be unwise to bid nil if you have isolated honor cards (ex. QK3, K8, A246) or consecutive honor cards with no support (ex. J10, QJ9). But if your partner has bid really high, you could risk it by assuming that the high card would be covered by Ace or ruffed by a spade.&lt;/p&gt;
-&lt;p&gt;I couldn&amp;rsquo;t stress this enough, but NEVER EVER BID NIL IF YOU HAVE MORE THAN 4 SPADES. 4 is very risky, but not impossible if you have a short suit and can manage to squeeze in a spade when an opponent ruffs that suit with a high spade or rely on someone to lead the spade four times.&lt;/p&gt;
-&lt;p&gt;Similar to non-spade suits, don&amp;rsquo;t bid nil if you have isolated high value cards unless you are desperate.&lt;/p&gt;
-&lt;p&gt;Blind nil is basically gambling, so just don&amp;rsquo;t. Go cry your ass off if confidently going blind nil in the 4th position bites you back by an innocent Ace of spades. Do this in the last round as a last resort, otherwise no.&lt;/p&gt;
-&lt;hr&gt;
-&lt;h2 id=&#34;playing&#34;&gt;Playing&lt;/h2&gt;
-&lt;h3 id=&#34;counting&#34;&gt;Counting&lt;/h3&gt;
-&lt;p&gt;People might suggest to you that you could easily pass by only counting the high cards. That&amp;rsquo;s not true. In a nil round, you could even be doomed by playing a card of 3 if spades have all been played and the only card left is 2. It is hard, but try to count all the cards.&lt;/p&gt;
-&lt;p&gt;If it is impossible to memorize every one of them, just keep track of how many rounds have been played alongside with the number of high cards to check the amount of cards left in a certain suit. At least you could avoid potentially leading to a void suit of your opponents or being overruffed and wasting a spade.&lt;/p&gt;
-&lt;p&gt;Count all the spades if possible. You can&amp;rsquo;t lose them.&lt;/p&gt;
-&lt;h3 id=&#34;opening-lead&#34;&gt;Opening Lead&lt;/h3&gt;
-&lt;p&gt;Open lead is always a controversial topic and one of the most discussed one would be whether or not you should always lead the Ace. My opinion is that it highly depends. When you hold a sequence of honor cards? ABSOLUTELY. When you have a doubleton/singleton? SURE. When you need to cover a nil? YES if you have other supporting high cards. When you have a long suit with low value cards? Not so much. When you want to set your opponent? Try another suit and save your Ace.&lt;/p&gt;
-&lt;p&gt;Lead the singleton and the higher card in the doubleton unless it contains Ace or King. But it does not matter if it&amp;rsquo;s an AK or KQ combination.&lt;/p&gt;
-&lt;p&gt;Some people lead a low card in a suit where they hold the King in hope of it being captured by an Ace. The chance is that it is more likely to be won by a non-Ace card and your King will be doomed if you only hold 2 cards in the suit.&lt;/p&gt;
-&lt;p&gt;Lead high in a balanced suit if you don&amp;rsquo;t have anything above.&lt;/p&gt;
-&lt;p&gt;Don&amp;rsquo;t underlead.&lt;/p&gt;
-&lt;h3 id=&#34;general-playing&#34;&gt;General Playing&lt;/h3&gt;
-&lt;p&gt;The golden Bridge rule still applies to Spades: second hand low and third hand high if you happen to be in those positions. Give your partner the opportunity to take the trick unless you hold the highest card in that suit or force your opponent to spend yet another higher card.&lt;/p&gt;
-&lt;p&gt;There is an exception to this rule for the second position, that is when your opponent plays an honor card. In this case you would have to think whether you should play low or cover it by another honor. The general rule is to cover it when you have two cards above that honor card, and to dodge when you don&amp;rsquo;t.&lt;/p&gt;
-&lt;p&gt;As a beginner, you might be taught to play high non-spades early and high spades late. But if you do not play high non-spades early and play high spades late, you are still guaranteed a trick if everyone else has run out of spades by counting carefully. This does not apply in most situations (ex. you have a balanced hand with an unplayed Ace/King and your opponent leads a card from that suit to the void of the other opponent, your high spades do not guarantee a lead back to yourself). In situations where you have a sequence of high spades or you are eager to discard it to avoid bags, it might be even better to play them early. There is also an impossible situation: play high non spade cards late and high spade cards early (isolated) since you would never gain the lead after winning the first round or losing it to a higher honor. So yeah, overall it is a fair rule.&lt;/p&gt;
-&lt;p&gt;If you win a round and have nothing particular to play, return the suit led by your partner.&lt;/p&gt;
-&lt;p&gt;Your partner has probably run out of a suit (unless you are trying to bag the opponents or the opponent has bid nil) if an honor card is thrown out early in the game. Return the suit as soon as possible. Same rule applies to the opponent: avoid the suit if the opponent is showing signs of a void.&lt;/p&gt;
-&lt;p&gt;Ruff the card with a high spade if the opponent on the left also has signs of a void. Discard a card from the shortest suit if you do not have high spades. In addition, if it is your partner (who has not played yet) who demonstrated signs, leave the ruffing part to the partner.&lt;/p&gt;
-&lt;p&gt;If you have a sequence of honor cards in spade, play them as soon as the spade is broken to minimize the chance of your opponents ruffing your other suits later. Watch your partner&amp;rsquo;s bid carefully. If it is midway through the game and your partner has &amp;gt;2 tricks till making the bid, lead a spade even if you have a small amount of spades or their values are too low since your partner probably has some honors. This only applies if your partner has a balanced hand, otherwise lead toward your partner&amp;rsquo;s void suit.&lt;/p&gt;
-&lt;p&gt;The timing of Ace of spades is very important and depends entirely on what you are trying to achieve. If you are on a bagging round, you would try your best not to get the lead or any extra tricks by either saving your Ace to the very end or to cover low value cards and then lead another low value card. I would go with the first method if I have at least another honor card and the second if I don&amp;rsquo;t. If you are trying to set your opponents, save it to capture their honor cards that might not necessarily be the end. If neither, just save it to the end.&lt;/p&gt;
-&lt;h3 id=&#34;nil-bid-on-your-side&#34;&gt;Nil Bid on Your Side&lt;/h3&gt;
-&lt;p&gt;It is debatable whether you should lead a high singleton on the first round if you bid nil and I would vote no. Being the first lead almost completely eliminates the chance of an opponent covering it for you in cases when your partner does not have any higher cards, yet playing it in the third/fourth position gives you a tiny chance to let it slip. Even if it is tiny, you are still gonna take it.&lt;/p&gt;
-&lt;p&gt;Instead lead the second lowest card from your safest suit (ex. 5 from 356TJQ, 7 from 2789K).&lt;/p&gt;
-&lt;p&gt;For the rest of the game, you only need to discard your highest cards whenever you can and pray for your partner to make good choices. Count carefully, since your bid could fail by a card as low as 3. The general rule is to get rid of all your spades as quickly as possible even if they have a low value and discard all the cards in your balanced/short non-spade suits. Other players will be more likely running out of your long suits.&lt;/p&gt;
-&lt;p&gt;When your partner is going nil, most of the times you do not need to worry about not making the bid unless the total bid is &amp;gt;11. In that case you would need to manage your winning card wisely and avoid wasting a bunch of Kings to Aces just to cover your partner&amp;rsquo;s cards. A better strategy might be returning your partner&amp;rsquo;s suit (have some trust even if you only hold low cards) to force out the Ace from your opponent. If the Ace does not appear after a minimum of 3 rounds, it is very possible that your partner has it.&lt;/p&gt;
-&lt;p&gt;Otherwise leading high and leading from the longest suit is the rule you should follow as a top priority. Let your opponents take the lead so you can throw away low cards that might end up defeating the nil in the end.&lt;/p&gt;
-&lt;p&gt;It&amp;rsquo;s common sense, but lead toward your partner&amp;rsquo;s void.&lt;/p&gt;
-&lt;p&gt;Pay attention to what your partner throws away. You can safely lead any card that&amp;rsquo;s one below the card your partner tosses in the last round. (ex. you played Ace and your partner played 10; you can lead with 9 in the next round safely)&lt;/p&gt;
-&lt;p&gt;Avoid ruffing unless you are sure your partner has no spades/has the highest card in the round/has a void in the suit. In the last situation, ruff with a high card so your partner can discard a high spade and you are almost guaranteed a trick.&lt;/p&gt;
-&lt;p&gt;And lead spades as soon as you can.&lt;/p&gt;
-&lt;p&gt;Depending on the score system you are using, it might be wise to break the nil if it can cost your opponent more.&lt;/p&gt;
-&lt;h3 id=&#34;defense-against-nil&#34;&gt;Defense against Nil&lt;/h3&gt;
-&lt;p&gt;I will say this at the beginning of this section: CHANGE YOUR STRATEGY WHEN SETTING THE NIL DOES NOT APPEAR POSSIBLE, which translates to focusing on setting your opponent&amp;rsquo;s bid if you cards are strong enough. Even though a -100 points for your opponents sounds appealing, but aim lower if your hand is just too &amp;ldquo;strong&amp;rdquo; for that. A bagging hand would be perfect for setting the cover bid.&lt;/p&gt;
-&lt;p&gt;You will do exactly the opposite to what I suggested above. Avoid the suit if the nil bidder plays low, and return the suit if the nil bidder plays high. Do not lead into the void suit.&lt;/p&gt;
-&lt;p&gt;Do lead into your partner&amp;rsquo;s void suit to get rid of some spades.&lt;/p&gt;
-&lt;p&gt;If you realize that the Ace or the Kind in a non spade suit has not appeared yet, don&amp;rsquo;t lead the suit for now since the chance of getting ruffed by the nil coverer is high. Wait until spades have been cleared out and take the lead.&lt;/p&gt;
-&lt;p&gt;Take the advantage of ruffing if the nil bidder seems to have a balanced hand. This way the bidder might be defeated by an uncovered low spade or high non-spade in the end. Ruff as high as possible with the exception of the nil bidder having a void.&lt;/p&gt;
-&lt;p&gt;Only play one above the card the nil coverer plays to avoid the nil bidder inserting a card between them. Also always play lower than the nil bidder whenever possible. It is rare but possible for the nil bid to be defeated by a 5 in the first few rounds.&lt;/p&gt;
-&lt;p&gt;Still lead spades as soon as you can, but this time lead low.&lt;/p&gt;
-&lt;hr&gt;
-&lt;h2 id=&#34;some-specific-situations&#34;&gt;Some Specific Situations&lt;/h2&gt;
-&lt;p&gt;&lt;em&gt;You have a sequence of top spades and a long (&amp;gt;5) non-spade suit&lt;/em&gt;
-Count the number of cards missing from your long non-spade suit and lead your Ace or second highest card. Return a low card in the same suit in another round since there is a chance of your high card getting ruffed. When the spade is broken, lead all of them at once. If you don&amp;rsquo;t have the Ace, lead the highest card you have; if you have a broken sequence, it does not matter since you would only lost that one specific trick if the card is not captured by your other high cards. After spades are cleared out, lead the long suit and claim all tricks. If there is a winning card remaining in other players&amp;rsquo; hand, save one spade and ruff the card that player returns after winning the round.&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;Your opponent has bid nil with a long suit containing a sequence of high cards which your other opponent and you/your partner has a void/singleton/doubleton in&lt;/em&gt;
-Play other suits as what you normally play except this one. Due to this specific card distribution in each player&amp;rsquo;s hand, this long suit is no longer safe and you should lead toward it. After the safe cards are played from the nil bidder&amp;rsquo;s hand, the nil coverer would have to ruff in order to cover the high card from the partner. If you have a void and play before the nil coverer, discard a high card from another non spade suit; if you play after, overruff the spade or discard a spade when there is nothing higher; if you still have cards in that suit, lead it and let your partner do the tasks above. The nil coverer will be wasting a bunch of spades, leaving the possibility of defeating the nil bid by an extra spade the nil bidder might not be able to get rid of.&lt;/p&gt;
-&lt;p&gt;&lt;em&gt;You and your partner has a void/singleton/doubleton in two different non-spade suits and a balanced hand of low spades&lt;/em&gt;
-This is where crossruffing comes into place. Lead toward each other&amp;rsquo;s void/singleton/doubleton to ruff the high cards from opponents. You can&amp;rsquo;t run this for more than 2 rounds each or even less since there is a high chance to be overruffed, but it probably does not make too much a difference if your low spade is going to be captured in a spade round anyway.&lt;/p&gt;
 </description>
       
     </item>
