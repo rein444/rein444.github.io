@@ -18,7 +18,7 @@ PygmentsCodeFences = true
 pygmentsUseClasses = false
 
 [author]
-email = "rein@fedora.email" # your email
+#email = "rein@fedora.email" # your email
 name = "rein"          # your name
 
 # https://gohugo.io/getting-started/configuration-markup
