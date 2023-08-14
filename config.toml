@@ -14,8 +14,8 @@ paginate = 7                              # number of posts each page
 rssLimit = 10                             # maximum items in rss feeds
 theme = "hugo-theme-texify"               # theme directory name
 title = "Midnight Rain Blog"                          # website title
-PygmentsCodeFences = true
-pygmentsUseClasses = false
+#PygmentsCodeFences = true
+#pygmentsUseClasses = false
 
 [author]
 #email = "rein@fedora.email" # your email
@@ -23,15 +23,15 @@ name = "rein"          # your name
 
 # https://gohugo.io/getting-started/configuration-markup
 [markup]
-  [markup.highlight]
-    codeFences = true
-    guessSyntax = true
-    hl_Lines = ""
-    lineNoStart = 1
-    lineNos = true
-    lineNumbersInTable = true
-    tabWidth = 4
-    noClasses = false
+ # [markup.highlight]
+  #  codeFences = true
+   # guessSyntax = true
+   # hl_Lines = ""
+   # lineNoStart = 1
+   # lineNos = true
+   # lineNumbersInTable = true
+   # tabWidth = 4
+   # noClasses = false
 
 # https://gohugo.io/content-management/menus/
 [[menu.main]]
